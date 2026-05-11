@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>心流旅人 SoulTraveler</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,'Noto Sans SC',sans-serif}
+  body{min-height:100vh;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);display:flex;align-items:center;justify-content:center;padding:40px 20px}
+  .card{background:rgba(255,255,255,0.06);backdrop-filter:blur(16px);border-radius:24px;border:1px solid rgba(255,255,255,0.1);padding:48px;max-width:560px;width:100%;text-align:center}
+  h1{color:#e2e8f0;font-size:28px;margin-bottom:4px}
+  .sub{color:#94a3b8;font-size:14px;margin-bottom:36px}
+  .links{display:flex;flex-direction:column;gap:12px}
+  a{display:block;padding:16px 24px;border-radius:14px;text-decoration:none;font-size:15px;font-weight:500;transition:all .2s;text-align:left}
+  a .label{display:block;margin-bottom:2px}
+  a .desc{font-size:12px;opacity:0.7}
+  .primary{background:linear-gradient(135deg,#6c63ff,#8b5cf6);color:#fff}
+  .primary:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(108,99,255,0.3)}
+  .secondary{background:rgba(255,255,255,0.06);color:#e2e8f0;border:1px solid rgba(255,255,255,0.1)}
+  .secondary:hover{background:rgba(255,255,255,0.1);transform:translateY(-2px)}
+  .footer{margin-top:32px;color:#64748b;font-size:11px}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>心流旅人 SoulTraveler</h1>
+  <div class="sub">"每一次专注，都是一次远行。"</div>
+  <div class="links">
+    <a href="心流旅人-综合评审页.html" class="primary">
+      <span class="label">📋 综合评审页</span>
+      <span class="desc">三栏布局：左侧切换台 + 中间手机原型 + 右侧 PRD 文档</span>
+    </a>
+    <a href="心流旅人-原型.html" class="secondary">
+      <span class="label">📱 交互原型</span>
+      <span class="desc">可操作的手机原型，含冥想计时、地图探索、手账收集等完整流程</span>
+    </a>
+    <a href="心流旅人-模块2-文档.md" class="secondary">
+      <span class="label">📄 PRD 文档 (Markdown)</span>
+      <span class="desc">模块 2 产品需求文档，8 章完整内容</span>
+    </a>
+    <a href="心流旅人-AI构建包.md" class="secondary">
+      <span class="label">🤖 AI 构建包 (Markdown)</span>
+      <span class="desc">模块 3 AI 构建指令，含数据模型、交互流程、规则定义</span>
+    </a>
+  </div>
+  <div class="footer">心流旅人 · MVP V1.0-Draft · 微信小程序</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>心流旅人 SoulTraveler · 交互原型控制台</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Noto Sans SC',sans-serif; }
+  body { background: linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%); min-height:100vh; display:flex; justify-content:center; align-items:flex-start; padding:24px; gap:32px; }
+
+  /* 控制台 */
+  .console { width:300px; min-height:600px; background:rgba(255,255,255,0.06); backdrop-filter:blur(16px); border-radius:20px; border:1px solid rgba(255,255,255,0.1); padding:24px; color:#e2e8f0; flex-shrink:0; position:sticky; top:24px; }
+  .console h2 { font-size:18px; font-weight:700; margin-bottom:4px; }
+  .console .subtitle { font-size:12px; color:#94a3b8; margin-bottom:20px; }
+  .group-title { font-size:13px; font-weight:600; color:#6c63ff; margin:16px 0 8px; text-transform:uppercase; letter-spacing:1px; }
+  .chip-grid { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
+  .chip { padding:5px 12px; border-radius:20px; font-size:12px; cursor:pointer; border:1px solid rgba(255,255,255,0.15); background:rgba(255,255,255,0.05); transition:all .2s; }
+  .chip:hover { background:rgba(108,99,255,0.2); border-color:#6c63ff; }
+  .chip.active { background:#6c63ff; border-color:#6c63ff; color:#fff; }
+  .console select { width:100%; padding:8px 12px; border-radius:10px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#e2e8f0; font-size:13px; margin-bottom:8px; }
+  .console select option { background:#1a1a2e; }
+  .apply-btn { width:100%; padding:10px; border-radius:12px; background:linear-gradient(135deg,#6c63ff,#8b5cf6); color:#fff; font-size:14px; font-weight:600; border:none; cursor:pointer; margin-top:16px; transition:transform .2s; }
+  .apply-btn:hover { transform:scale(1.02); }
+  .console-note { margin-top:16px; padding:12px; background:rgba(108,99,255,0.1); border-radius:10px; font-size:11px; color:#94a3b8; line-height:1.6; }
+
+  /* 手机模型 */
+  .phone-frame { width:390px; height:844px; background:#000; border-radius:48px; padding:12px; box-shadow:0 25px 80px rgba(0,0,0,0.5); flex-shrink:0; position:relative; }
+  .phone-notch { width:120px; height:28px; background:#000; border-radius:0 0 16px 16px; position:absolute; top:0; left:50%; transform:translateX(-50%); z-index:20; }
+  .phone-screen { width:100%; height:100%; background:#0a0e27; border-radius:40px; overflow:hidden; position:relative; }
+  .status-bar { height:48px; display:flex; justify-content:space-between; align-items:center; padding:0 24px; font-size:12px; color:#e2e8f0; position:relative; z-index:10; }
+
+  /* 页面容器 */
+  .page { display:none; height:calc(100% - 48px - 60px); overflow-y:auto; position:relative; }
+  .page.active { display:flex; flex-direction:column; }
+
+  /* 底部导航 */
+  .tab-bar { height:60px; display:flex; background:rgba(10,14,39,0.95); border-top:1px solid rgba(255,255,255,0.08); position:absolute; bottom:0; left:0; right:0; border-radius:0 0 40px 40px; z-index:10; }
+  .tab-item { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; color:#64748b; font-size:10px; gap:2px; transition:color .2s; }
+  .tab-item.active { color:#6c63ff; }
+  .tab-item .tab-icon { font-size:20px; }
+
+  /* 冥想页 */
+  .meditation-scene { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; padding:16px; }
+  .scene-bg { position:absolute; inset:0; opacity:0.4; }
+  .scene-bg.xian { background:linear-gradient(180deg,#4a3728 0%,#2d1f14 40%,#0a0e27 100%); }
+  .scene-bg.dunhuang { background:linear-gradient(180deg,#5c4a2f 0%,#3d2d1a 40%,#0a0e27 100%); }
+  .scene-bg.samarkand { background:linear-gradient(180deg,#1e3a5f 0%,#152744 40%,#0a0e27 100%); }
+  .scene-bg.isfahan { background:linear-gradient(180deg,#2a4858 0%,#1a3040 40%,#0a0e27 100%); }
+  .scene-bg.istanbul { background:linear-gradient(180deg,#4a2d3d 0%,#2d1a28 40%,#0a0e27 100%); }
+  .city-label { position:relative; z-index:2; color:#f5c842; font-size:13px; font-weight:500; margin-bottom:4px; }
+  .fragment-bar { position:relative; z-index:2; display:flex; align-items:center; gap:6px; margin-bottom:20px; }
+  .fragment-dot { width:10px; height:10px; border-radius:50%; }
+  .fragment-dot.filled { background:#f5c842; box-shadow:0 0 6px rgba(245,200,66,0.5); }
+  .fragment-dot.empty { background:#2a2a4a; border:1px solid #3a3a5a; }
+  .fragment-text { font-size:11px; color:#94a3b8; margin-left:4px; }
+
+  /* 云宝角色 */
+  .character { width:100px; height:120px; position:relative; z-index:2; margin:20px 0; }
+  .char-body { width:80px; height:70px; background:radial-gradient(ellipse,#e0d6ff 30%,#b8a9f0 100%); border-radius:50% 50% 40% 40%; margin:0 auto; position:relative; }
+  .char-horn { position:absolute; width:8px; height:16px; background:#f5c842; border-radius:4px; top:-12px; }
+  .char-horn.left { left:22px; transform:rotate(-15deg); }
+  .char-horn.right { right:22px; transform:rotate(15deg); }
+  .char-eyes { display:flex; gap:16px; justify-content:center; margin-top:20px; }
+  .char-eye { width:8px; height:8px; background:#2a2a4a; border-radius:50%; }
+  .char-eye.closed { height:2px; border-radius:2px; margin-top:3px; }
+  .char-bell { width:8px; height:8px; background:#f5c842; border-radius:50%; margin:8px auto 0; }
+  .char-glow { position:absolute; inset:-20px; border-radius:50%; background:radial-gradient(circle,rgba(108,99,255,0.3) 0%,transparent 70%); animation:breathe 4s ease-in-out infinite; }
+  @keyframes breathe { 0%,100%{opacity:0.3;transform:scale(0.9)} 50%{opacity:0.8;transform:scale(1.1)} }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  .char-idle .char-body { animation:float 3s ease-in-out infinite; }
+  .char-focus .char-glow { display:block; }
+  .char-idle .char-glow { display:none; }
+
+  /* 粒子 */
+  .particles { position:absolute; inset:0; z-index:1; pointer-events:none; overflow:hidden; }
+  .particle { position:absolute; width:3px; height:3px; background:#6c63ff; border-radius:50%; opacity:0; }
+  .particles.active .particle { animation:rise 3s ease-in infinite; }
+  @keyframes rise { 0%{opacity:0;transform:translateY(0)} 30%{opacity:0.8} 100%{opacity:0;transform:translateY(-200px)} }
+
+  /* 计时器 */
+  .timer-display { position:relative; z-index:2; text-align:center; }
+  .timer-ring { width:180px; height:180px; margin:0 auto; position:relative; }
+  .timer-ring svg { transform:rotate(-90deg); }
+  .timer-ring circle { fill:none; stroke-width:4; }
+  .timer-ring .bg { stroke:rgba(255,255,255,0.08); }
+  .timer-ring .progress { stroke:#6c63ff; stroke-linecap:round; transition:stroke-dashoffset 1s linear; }
+  .timer-text { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .timer-time { font-size:40px; font-weight:300; color:#e2e8f0; font-variant-numeric:tabular-nums; letter-spacing:2px; }
+  .timer-label { font-size:11px; color:#94a3b8; margin-top:4px; }
+
+  /* 按钮 */
+  .btn-primary { padding:12px 32px; border-radius:30px; background:linear-gradient(135deg,#6c63ff,#8b5cf6); color:#fff; font-size:15px; font-weight:600; border:none; cursor:pointer; transition:all .3s; position:relative; z-index:2; }
+  .btn-primary:hover { transform:scale(1.03); box-shadow:0 4px 20px rgba(108,99,255,0.4); }
+  .btn-secondary { padding:8px 20px; border-radius:20px; background:rgba(255,255,255,0.08); color:#e2e8f0; font-size:13px; border:1px solid rgba(255,255,255,0.15); cursor:pointer; transition:all .2s; }
+  .btn-secondary:hover { background:rgba(255,255,255,0.15); }
+  .duration-selector { display:flex; gap:8px; margin-top:16px; position:relative; z-index:2; }
+  .duration-chip { padding:6px 16px; border-radius:20px; font-size:13px; color:#94a3b8; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); cursor:pointer; transition:all .2s; }
+  .duration-chip.active { color:#fff; background:rgba(108,99,255,0.3); border-color:#6c63ff; }
+  .btn-group { display:flex; gap:12px; margin-top:16px; position:relative; z-index:2; }
+
+  /* 地图页 */
+  .map-container { padding:16px; flex:1; }
+  .map-title { color:#e2e8f0; font-size:16px; font-weight:600; margin-bottom:4px; }
+  .map-progress { color:#94a3b8; font-size:12px; margin-bottom:16px; }
+  .route-line { display:flex; flex-direction:column; gap:0; }
+  .city-node { display:flex; align-items:center; gap:12px; padding:10px 0; cursor:pointer; transition:all .2s; }
+  .city-node:hover { background:rgba(255,255,255,0.03); border-radius:8px; }
+  .node-dot { width:16px; height:16px; border-radius:50%; flex-shrink:0; position:relative; }
+  .node-dot.unlocked { background:#f5c842; box-shadow:0 0 8px rgba(245,200,66,0.5); }
+  .node-dot.current { background:#6c63ff; box-shadow:0 0 12px rgba(108,99,255,0.6); animation:pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{box-shadow:0 0 8px rgba(108,99,255,0.4)} 50%{box-shadow:0 0 20px rgba(108,99,255,0.8)} }
+  .node-dot.locked { background:#2a2a4a; border:1px solid #3a3a5a; }
+  .node-connector { width:2px; height:20px; background:rgba(255,255,255,0.1); margin-left:7px; }
+  .node-connector.active { background:linear-gradient(180deg,#f5c842,rgba(245,200,66,0.2)); }
+  .node-info { flex:1; }
+  .node-name { color:#e2e8f0; font-size:14px; font-weight:500; }
+  .node-name.locked { color:#64748b; }
+  .node-sub { color:#94a3b8; font-size:11px; }
+  .node-sub.locked { color:#475569; }
+  .node-status { font-size:10px; padding:2px 8px; border-radius:10px; }
+  .node-status.completed { background:rgba(245,200,66,0.15); color:#f5c842; }
+  .node-status.current-badge { background:rgba(108,99,255,0.2); color:#a78bfa; }
+  .node-status.need { background:rgba(255,255,255,0.05); color:#64748b; }
+
+  /* 探索页 */
+  .explore-container { padding:16px; flex:1; }
+  .explore-city-img { width:100%; height:140px; border-radius:12px; margin-bottom:12px; display:flex; align-items:center; justify-content:center; font-size:40px; }
+  .explore-city-img.xian-img { background:linear-gradient(135deg,#5a4a38,#3d2d1a); }
+  .explore-desc { color:#94a3b8; font-size:13px; line-height:1.8; margin-bottom:16px; }
+  .event-card { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:14px; margin-bottom:10px; cursor:pointer; transition:all .2s; }
+  .event-card:hover { background:rgba(108,99,255,0.1); border-color:rgba(108,99,255,0.3); }
+  .event-card.done { opacity:0.5; }
+  .event-title { color:#e2e8f0; font-size:14px; font-weight:500; }
+  .event-reward { color:#f5c842; font-size:11px; margin-top:4px; }
+  .event-done-tag { color:#22c55e; font-size:11px; float:right; }
+
+  /* 事件详情弹层 */
+  .event-modal { display:none; position:absolute; inset:0; background:rgba(10,14,39,0.95); z-index:30; padding:24px; flex-direction:column; }
+  .event-modal.show { display:flex; }
+  .event-modal-title { color:#f5c842; font-size:18px; font-weight:600; margin-bottom:16px; }
+  .event-modal-text { color:#cbd5e1; font-size:14px; line-height:2; margin-bottom:16px; flex:1; }
+  .event-modal-fact { background:rgba(108,99,255,0.1); border-radius:10px; padding:12px; margin-bottom:16px; }
+  .event-modal-fact-label { color:#6c63ff; font-size:11px; font-weight:600; margin-bottom:4px; }
+  .event-modal-fact-text { color:#94a3b8; font-size:12px; line-height:1.6; }
+  .reward-card { background:linear-gradient(135deg,rgba(245,200,66,0.1),rgba(108,99,255,0.1)); border:1px solid rgba(245,200,66,0.3); border-radius:12px; padding:16px; text-align:center; margin-bottom:16px; }
+  .reward-icon { font-size:36px; margin-bottom:8px; }
+  .reward-name { color:#f5c842; font-size:16px; font-weight:600; }
+  .reward-desc { color:#94a3b8; font-size:12px; margin-top:4px; }
+
+  /* 手账页 */
+  .journal-container { padding:16px; flex:1; }
+  .journal-progress { color:#f5c842; font-size:14px; font-weight:600; margin-bottom:16px; }
+  .journal-city { margin-bottom:20px; }
+  .journal-city-name { color:#e2e8f0; font-size:14px; font-weight:600; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+  .journal-items { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .journal-item { background:rgba(255,255,255,0.05); border-radius:10px; padding:10px; text-align:center; min-height:90px; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .journal-item.collected { border:1px solid rgba(245,200,66,0.2); }
+  .journal-item.locked { border:1px solid rgba(255,255,255,0.05); }
+  .journal-item-icon { font-size:24px; margin-bottom:4px; }
+  .journal-item-name { font-size:10px; color:#e2e8f0; }
+  .journal-item-type { font-size:9px; color:#64748b; }
+  .journal-item.locked .journal-item-icon { opacity:0.3; }
+  .journal-item.locked .journal-item-name { color:#475569; }
+
+  /* 个人中心 */
+  .profile-container { padding:16px; flex:1; }
+  .profile-header { display:flex; align-items:center; gap:12px; margin-bottom:20px; }
+  .profile-avatar { width:48px; height:48px; background:linear-gradient(135deg,#6c63ff,#8b5cf6); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; }
+  .profile-name { color:#e2e8f0; font-size:16px; font-weight:600; }
+  .profile-title { color:#94a3b8; font-size:12px; }
+  .stat-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:20px; }
+  .stat-card { background:rgba(255,255,255,0.05); border-radius:12px; padding:12px; text-align:center; }
+  .stat-num { color:#f5c842; font-size:22px; font-weight:700; }
+  .stat-label { color:#94a3b8; font-size:10px; margin-top:2px; }
+  .setting-item { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid rgba(255,255,255,0.05); }
+  .setting-label { color:#e2e8f0; font-size:13px; }
+  .setting-value { color:#94a3b8; font-size:13px; }
+  .toggle { width:40px; height:22px; border-radius:11px; background:#2a2a4a; position:relative; cursor:pointer; transition:background .3s; }
+  .toggle.on { background:#6c63ff; }
+  .toggle::after { content:''; position:absolute; width:18px; height:18px; border-radius:50%; background:#fff; top:2px; left:2px; transition:transform .3s; }
+  .toggle.on::after { transform:translateX(18px); }
+
+  /* 完成弹窗 */
+  .complete-modal { display:none; position:absolute; inset:0; background:rgba(10,14,39,0.9); z-index:30; flex-direction:column; align-items:center; justify-content:center; padding:24px; }
+  .complete-modal.show { display:flex; }
+  .complete-emoji { font-size:60px; margin-bottom:16px; animation:bounce .6s ease; }
+  @keyframes bounce { 0%{transform:scale(0)} 50%{transform:scale(1.2)} 100%{transform:scale(1)} }
+  .complete-title { color:#f5c842; font-size:20px; font-weight:700; margin-bottom:8px; }
+  .complete-desc { color:#94a3b8; font-size:14px; text-align:center; margin-bottom:24px; }
+
+  /* Toast */
+  .toast { display:none; position:absolute; bottom:80px; left:50%; transform:translateX(-50%); background:rgba(108,99,255,0.9); color:#fff; padding:8px 20px; border-radius:20px; font-size:12px; z-index:40; white-space:nowrap; }
+  .toast.show { display:block; animation:fadeInOut 2s ease; }
+  @keyframes fadeInOut { 0%{opacity:0;transform:translateX(-50%) translateY(10px)} 15%{opacity:1;transform:translateX(-50%) translateY(0)} 85%{opacity:1} 100%{opacity:0} }
+
+  /* 加载态 */
+  .skeleton { background:linear-gradient(90deg,rgba(255,255,255,0.05) 25%,rgba(255,255,255,0.1) 50%,rgba(255,255,255,0.05) 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; border-radius:8px; }
+  @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+  /* 空态 */
+  .empty-state { text-align:center; padding:60px 24px; }
+  .empty-icon { font-size:48px; margin-bottom:12px; opacity:0.5; }
+  .empty-text { color:#64748b; font-size:14px; }
+
+  /* 失败态 */
+  .error-state { text-align:center; padding:40px 24px; }
+  .error-icon { font-size:36px; margin-bottom:12px; }
+  .error-text { color:#ef4444; font-size:14px; margin-bottom:12px; }
+</style>
+</head>
+<body>
+
+<!-- ========== 左侧控制台 ========== -->
+<div class="console">
+  <h2>心流旅人</h2>
+  <div class="subtitle">SoulTraveler · 交互原型控制台</div>
+
+  <div class="group-title">当前城市</div>
+  <div class="chip-grid" id="cityChips">
+    <div class="chip active" data-city="xian" onclick="selectCity(this)">西安</div>
+    <div class="chip" data-city="dunhuang" onclick="selectCity(this)">敦煌</div>
+    <div class="chip" data-city="samarkand" onclick="selectCity(this)">撒马尔罕</div>
+    <div class="chip" data-city="isfahan" onclick="selectCity(this)">伊斯法罕</div>
+    <div class="chip" data-city="istanbul" onclick="selectCity(this)">伊斯坦布尔</div>
+  </div>
+
+  <div class="group-title">专注时长</div>
+  <div class="chip-grid" id="durationChips">
+    <div class="chip" data-dur="15" onclick="selectDuration(this)">15分钟</div>
+    <div class="chip active" data-dur="25" onclick="selectDuration(this)">25分钟</div>
+    <div class="chip" data-dur="45" onclick="selectDuration(this)">45分钟</div>
+  </div>
+
+  <div class="group-title">番茄钟状态</div>
+  <select id="timerState" onchange="changeTimerState(this.value)">
+    <option value="idle">未开始</option>
+    <option value="focusing">冥想中</option>
+    <option value="paused">已暂停</option>
+    <option value="resting">休息中</option>
+    <option value="completed">冥想完成</option>
+  </select>
+
+  <div class="group-title">旅行进度</div>
+  <select id="travelProgress" onchange="changeTravelProgress(this.value)">
+    <option value="1">起点(1城已解锁)</option>
+    <option value="4">途中(4城已解锁)</option>
+    <option value="8">接近终点(8城已解锁)</option>
+    <option value="10">全部完成(10城)</option>
+  </select>
+
+  <div class="group-title">界面状态</div>
+  <select id="uiState" onchange="changeUiState(this.value)">
+    <option value="normal">正常态</option>
+    <option value="empty">空态(首次使用)</option>
+    <option value="loading">加载态</option>
+    <option value="error">失败态(网络异常)</option>
+  </select>
+
+  <button class="apply-btn" onclick="applyAll()">应用到原型</button>
+
+  <div class="console-note">
+    <strong>控制台说明</strong><br>
+    切换上方变量后点击"应用到原型",右侧手机原型会实时更新。手机屏内按钮均可点击交互。
+  </div>
+</div>
+
+<!-- ========== 右侧手机模型 ========== -->
+<div class="phone-frame">
+  <div class="phone-notch"></div>
+  <div class="phone-screen" id="phoneScreen">
+    <div class="status-bar">
+      <span>9:41</span>
+      <span>心流旅人</span>
+      <span>📶 🔋</span>
+    </div>
+
+    <!-- 冥想页 -->
+    <div class="page active" id="pageMeditation">
+      <div class="meditation-scene">
+        <div class="scene-bg xian" id="sceneBg"></div>
+        <div class="city-label" id="cityLabel">📍 西安 · 千年古都</div>
+        <div class="fragment-bar" id="fragmentBar">
+          <span class="fragment-text">🔑 前往敦煌</span>
+          <div class="fragment-dot filled"></div>
+          <div class="fragment-dot filled"></div>
+          <div class="fragment-dot filled"></div>
+          <div class="fragment-dot empty"></div>
+          <div class="fragment-dot empty"></div>
+          <span class="fragment-text">3/5</span>
+        </div>
+        <div class="particles" id="particles">
+          <div class="particle" style="left:40%;bottom:30%;animation-delay:0s"></div>
+          <div class="particle" style="left:50%;bottom:25%;animation-delay:0.8s"></div>
+          <div class="particle" style="left:45%;bottom:35%;animation-delay:1.6s"></div>
+          <div class="particle" style="left:55%;bottom:28%;animation-delay:2.4s"></div>
+        </div>
+        <div class="character char-idle" id="character">
+          <div class="char-glow"></div>
+          <div class="char-body">
+            <div class="char-horn left"></div>
+            <div class="char-horn right"></div>
+            <div class="char-eyes" id="charEyes">
+              <div class="char-eye"></div>
+              <div class="char-eye"></div>
+            </div>
+            <div class="char-bell"></div>
+          </div>
+        </div>
+        <div class="timer-display" id="timerDisplay">
+          <div class="timer-ring">
+            <svg width="180" height="180" viewBox="0 0 180 180">
+              <circle class="bg" cx="90" cy="90" r="86"/>
+              <circle class="progress" id="timerProgress" cx="90" cy="90" r="86" stroke-dasharray="540" stroke-dashoffset="0"/>
+            </svg>
+            <div class="timer-text">
+              <div class="timer-time" id="timerTime">25:00</div>
+              <div class="timer-label" id="timerLabel">选择时长开始冥想</div>
+            </div>
+          </div>
+        </div>
+        <div id="controlsIdle" style="position:relative;z-index:2;text-align:center">
+          <button class="btn-primary" onclick="startMeditation()">开始冥想 🧘</button>
+          <div class="duration-selector">
+            <div class="duration-chip" onclick="pickDuration(this,15)">15min</div>
+            <div class="duration-chip active" onclick="pickDuration(this,25)">25min</div>
+            <div class="duration-chip" onclick="pickDuration(this,45)">45min</div>
+          </div>
+        </div>
+        <div id="controlsFocusing" style="display:none;position:relative;z-index:2">
+          <div class="btn-group">
+            <button class="btn-secondary" onclick="pauseMeditation()">⏸ 暂停</button>
+            <button class="btn-secondary" onclick="abandonMeditation()" style="color:#ef4444;border-color:rgba(239,68,68,0.3)">✕ 放弃</button>
+          </div>
+        </div>
+        <div id="controlsPaused" style="display:none;position:relative;z-index:2">
+          <div class="btn-group">
+            <button class="btn-primary" onclick="resumeMeditation()" style="font-size:12px">▶ 继续</button>
+            <button class="btn-secondary" onclick="abandonMeditation()" style="color:#ef4444;border-color:rgba(239,68,68,0.3)">✕ 放弃</button>
+          </div>
+        </div>
+        <div id="controlsResting" style="display:none;position:relative;z-index:2;text-align:center">
+          <button class="btn-primary" onclick="navigateTo('explore')" style="background:linear-gradient(135deg,#f5c842,#e6a817);color:#1a1a2e">探索当前城市 🔍</button>
+          <div style="color:#94a3b8;font-size:11px;margin-top:8px">休息中 · 5:00</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 地图页 -->
+    <div class="page" id="pageMap">
+      <div class="map-container">
+        <div class="map-title">🗺️ 丝绸之路</div>
+        <div class="map-progress" id="mapProgress">4/10 城市已探索</div>
+        <div class="route-line" id="routeLine"></div>
+      </div>
+    </div>
+
+    <!-- 探索页 -->
+    <div class="page" id="pageExplore">
+      <div class="explore-container" id="exploreContent"></div>
+      <div class="event-modal" id="eventModal">
+        <button class="btn-secondary" onclick="closeEventModal()" style="align-self:flex-start;margin-bottom:16px">← 返回</button>
+        <div class="event-modal-title" id="modalTitle"></div>
+        <div class="event-modal-text" id="modalText"></div>
+        <div class="event-modal-fact">
+          <div class="event-modal-fact-label">💡 你知道吗</div>
+          <div class="event-modal-fact-text" id="modalFact"></div>
+        </div>
+        <div class="reward-card">
+          <div class="reward-icon" id="rewardIcon">🏞</div>
+          <div class="reward-name" id="rewardName">大雁塔晨光</div>
+          <div class="reward-desc" id="rewardDesc">晨光中的大雁塔,已矗立千年</div>
+        </div>
+        <button class="btn-primary" onclick="collectReward()" style="align-self:center">收入手账 📖</button>
+      </div>
+    </div>
+
+    <!-- 手账页 -->
+    <div class="page" id="pageJournal">
+      <div class="journal-container" id="journalContent"></div>
+    </div>
+
+    <!-- 个人中心 -->
+    <div class="page" id="pageProfile">
+      <div class="profile-container">
+        <div class="profile-header">
+          <div class="profile-avatar">🧘</div>
+          <div>
+            <div class="profile-name">灵魂旅人</div>
+            <div class="profile-title">远行者 · Lv.5</div>
+          </div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-num" id="statMinutes">1250</div><div class="stat-label">专注分钟</div></div>
+          <div class="stat-card"><div class="stat-num" id="statTomatoes">52</div><div class="stat-label">番茄数</div></div>
+          <div class="stat-card"><div class="stat-num" id="statStreak">7</div><div class="stat-label">连续天数</div></div>
+        </div>
+        <div style="background:rgba(108,99,255,0.1);border-radius:12px;padding:16px;margin-bottom:20px">
+          <div style="color:#e2e8f0;font-size:13px;font-weight:500;margin-bottom:8px">当前旅程</div>
+          <div style="color:#f5c842;font-size:15px;font-weight:600" id="profileCity">📍 伊斯法罕 · 半天下之城</div>
+          <div style="color:#94a3b8;font-size:12px;margin-top:4px" id="profileProgress">旅行进度 40% · 收集物 14/35</div>
+        </div>
+        <div style="color:#e2e8f0;font-size:14px;font-weight:600;margin-bottom:12px">设置</div>
+        <div class="setting-item"><span class="setting-label">默认专注时长</span><span class="setting-value">25 分钟</span></div>
+        <div class="setting-item"><span class="setting-label">环境白噪音</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="setting-item"><span class="setting-label">振动反馈</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="setting-item"><span class="setting-label">关于心流旅人</span><span class="setting-value">V1.0 ></span></div>
+      </div>
+    </div>
+
+    <!-- 完成弹窗 -->
+    <div class="complete-modal" id="completeModal">
+      <div class="complete-emoji">✨</div>
+      <div class="complete-title">冥想完成!</div>
+      <div class="complete-desc" id="completeDesc">获得 2 个钥匙碎片 🔑</div>
+      <button class="btn-primary" onclick="dismissComplete()" style="margin-bottom:12px">继续</button>
+      <button class="btn-secondary" onclick="dismissComplete();navigateTo('map')">去地图看看 🗺️</button>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- 底部导航 -->
+    <div class="tab-bar">
+      <div class="tab-item active" onclick="switchTab('meditation')"><span class="tab-icon">🧘</span>冥想</div>
+      <div class="tab-item" onclick="switchTab('map')"><span class="tab-icon">🗺️</span>地图</div>
+      <div class="tab-item" onclick="switchTab('explore')"><span class="tab-icon">🔍</span>探索</div>
+      <div class="tab-item" onclick="switchTab('journal')"><span class="tab-icon">📖</span>手账</div>
+      <div class="tab-item" onclick="switchTab('profile')"><span class="tab-icon">👤</span>我的</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========== 状态 ==========
+const state = {
+  city: 'xian',
+  duration: 25,
+  timerState: 'idle',
+  travelProgress: 4,
+  uiState: 'normal',
+  currentTab: 'meditation',
+  remaining: 25*60
+};
+let countdownTimer = null;
+function startCountdown(){
+  if(countdownTimer) clearInterval(countdownTimer);
+  countdownTimer = setInterval(()=>{
+    if(state.timerState!=='focusing') return;
+    state.remaining--;
+    if(state.remaining<=0){state.remaining=0;clearInterval(countdownTimer);countdownTimer=null;state.timerState='completed';render();return;}
+    const m=Math.floor(state.remaining/60), s=state.remaining%60;
+    document.getElementById('timerTime').textContent=m+':'+(s<10?'0':'')+s;
+    const circ=2*Math.PI*72, pct=(state.duration*60-state.remaining)/(state.duration*60);
+    document.getElementById('timerProgress').style.strokeDashoffset=(circ*(1-pct)).toFixed(1);
+  },1000);
+}
+function stopCountdown(){if(countdownTimer){clearInterval(countdownTimer);countdownTimer=null;}}
+
+const CITIES = [
+  {id:'xian',name:'西安',sub:'千年古都,丝路起点',bg:'xian',order:1},
+  {id:'dunhuang',name:'敦煌',sub:'大漠明珠,飞天故乡',bg:'dunhuang',order:2},
+  {id:'samarkand',name:'撒马尔罕',sub:'蓝色穹顶之城',bg:'samarkand',order:3},
+  {id:'isfahan',name:'伊斯法罕',sub:'半天下之城',bg:'isfahan',order:4},
+  {id:'istanbul',name:'伊斯坦布尔',sub:'横跨欧亚的千年之城',bg:'istanbul',order:5},
+  {id:'athens',name:'雅典',sub:'智慧之城,哲学的故乡',bg:'istanbul',order:6},
+  {id:'rome',name:'罗马',sub:'永恒之城,万城之城',bg:'istanbul',order:7},
+  {id:'paris',name:'巴黎',sub:'光之城,浪漫之都',bg:'istanbul',order:8},
+  {id:'london',name:'伦敦',sub:'雾都,日不落的帝国之心',bg:'istanbul',order:9},
+  {id:'reykjavik',name:'雷克雅未克',sub:'世界尽头,极光之地',bg:'istanbul',order:10}
+];
+
+const EVENTS = {
+  xian:[
+    {title:'登上古城墙',desc:'你踏上了这座周长13.74公里的城墙,脚下是600年的青砖。远处的钟鼓楼在夕阳中泛着金光,城墙上的风带着黄土高原特有的干燥气息。',fact:'西安城墙是中国现存最完整的古城墙,建于明朝洪武年间(1370年),全长13.74公里。',reward:{icon:'🏞',name:'大雁塔晨光',desc:'晨光中的大雁塔,已矗立千年',type:'风景'}},
+    {title:'品一碗油泼面',desc:'街角的面馆里,师傅把面团摔打成宽带,热油浇上去的一刹那,辣椒面和蒜末发出滋滋声响,香气扑面而来。',fact:'油泼面的关键在于"泼"的那一刻:油温需要达到220°C,才能激发出辣椒素的香气而不是苦味。',reward:{icon:'🍜',name:'油泼面',desc:'热油浇上的一刹那,就是西安的味道',type:'美食'}},
+    {title:'在大雁塔下发呆',desc:'大雁塔的影子拉得很长。你坐在塔下的石阶上,听远处有人在唱秦腔,苍凉而浑厚。一千三百年前,玄奘法师也曾站在这里。',fact:'"长安一片月,万户捣衣声"——李白写这首诗时,正是大雁塔建成后不到百年。',reward:{icon:'📜',name:'长安月色',desc:'"长安一片月,万户捣衣声" —— 李白',type:'卷轴'}}
+  ]
+};
+
+const JOURNAL = {
+  xian:{name:'西安',items:[
+    {icon:'🏞',name:'大雁塔晨光',type:'风景',collected:true},
+    {icon:'🍜',name:'油泼面',type:'美食',collected:true},
+    {icon:'🍜',name:'冰峰汽水',type:'美食',collected:false},
+    {icon:'📜',name:'长安月色',type:'卷轴',collected:true}
+  ]},
+  dunhuang:{name:'敦煌',items:[
+    {icon:'🏞',name:'莫高窟飞天',type:'风景',collected:true},
+    {icon:'🍜',name:'驴肉黄面',type:'美食',collected:false},
+    {icon:'📜',name:'西出阳关',type:'卷轴',collected:true}
+  ]},
+  samarkand:{name:'撒马尔罕',items:[
+    {icon:'🏞',name:'蓝色穹顶',type:'风景',collected:false},
+    {icon:'🍜',name:'手抓饭',type:'美食',collected:false},
+    {icon:'📜',name:'丝路诗篇',type:'卷轴',collected:false}
+  ]}
+};
+
+// ========== 控制台交互 ==========
+function selectCity(el){
+  document.querySelectorAll('#cityChips .chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  state.city = el.dataset.city;
+}
+function selectDuration(el){
+  document.querySelectorAll('#durationChips .chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  state.duration = parseInt(el.dataset.dur);
+}
+function changeTimerState(v){ stopCountdown(); state.timerState = v; if(v==='idle'){state.remaining=state.duration*60}else if(v==='focusing'){state.remaining=Math.floor(state.duration*60*0.74);startCountdown()}else if(v==='paused'){state.remaining=Math.floor(state.duration*60*0.74)} }
+function changeTravelProgress(v){ state.travelProgress = parseInt(v); }
+function changeUiState(v){ state.uiState = v; }
+function applyAll(){ render(); }
+
+// ========== 渲染 ==========
+function render(){
+  renderMeditation();
+  renderMap();
+  renderJournal();
+  renderExplore();
+}
+
+function renderMeditation(){
+  const city = CITIES.find(c=>c.id===state.city)||CITIES[0];
+  document.getElementById('sceneBg').className = 'scene-bg ' + city.bg;
+  document.getElementById('cityLabel').textContent = '📍 ' + city.name + ' · ' + city.sub.split(',')[0];
+
+  const dur = state.duration;
+  const frag = state.timerState==='completed'? 5 : 3;
+  const fragBar = document.getElementById('fragmentBar');
+  const nextCity = CITIES.find(c=>c.order===city.order+1);
+  let dots = '';
+  for(let i=0;i<5;i++) dots += `<div class="fragment-dot ${i<frag?'filled':'empty'}"></div>`;
+  fragBar.innerHTML = `<span class="fragment-text">🔑 ${nextCity?'前往'+nextCity.name:'已完成'}</span>${dots}<span class="fragment-text">${frag}/5</span>`;
+
+  document.getElementById('timerTime').textContent = dur+':00';
+  const char = document.getElementById('character');
+  const eyes = document.getElementById('charEyes');
+  const particles = document.getElementById('particles');
+
+  document.getElementById('controlsIdle').style.display = 'none';
+  document.getElementById('controlsFocusing').style.display = 'none';
+  document.getElementById('controlsPaused').style.display = 'none';
+  document.getElementById('controlsResting').style.display = 'none';
+
+  char.className = 'character';
+  particles.classList.remove('active');
+  eyes.innerHTML = '<div class="char-eye"></div><div class="char-eye"></div>';
+
+  const progress = document.getElementById('timerProgress');
+  const label = document.getElementById('timerLabel');
+
+  switch(state.timerState){
+    case 'idle':
+      char.classList.add('char-idle');
+      document.getElementById('controlsIdle').style.display = '';
+      label.textContent = '选择时长开始冥想';
+      progress.style.strokeDashoffset = '0';
+      break;
+    case 'focusing':{
+      char.classList.add('char-focus');
+      eyes.innerHTML = '<div class="char-eye closed"></div><div class="char-eye closed"></div>';
+      particles.classList.add('active');
+      document.getElementById('controlsFocusing').style.display = '';
+      const fm=Math.floor(state.remaining/60),fs=state.remaining%60;
+      document.getElementById('timerTime').textContent=fm+':'+(fs<10?'0':'')+fs;
+      label.textContent = '冥想中...';
+      const fc=2*Math.PI*72,fp=(state.duration*60-state.remaining)/(state.duration*60);
+      progress.style.strokeDashoffset=(fc*(1-fp)).toFixed(1);
+      break;}
+    case 'paused':{
+      char.classList.add('char-idle');
+      document.getElementById('controlsPaused').style.display = '';
+      const pm=Math.floor(state.remaining/60),ps=state.remaining%60;
+      document.getElementById('timerTime').textContent=pm+':'+(ps<10?'0':'')+ps;
+      label.textContent = '已暂停';
+      const pc=2*Math.PI*72,pp=(state.duration*60-state.remaining)/(state.duration*60);
+      progress.style.strokeDashoffset=(pc*(1-pp)).toFixed(1);
+      break;}
+    case 'resting':
+      char.classList.add('char-idle');
+      document.getElementById('controlsResting').style.display = '';
+      document.getElementById('timerTime').textContent = '5:00';
+      label.textContent = '休息中';
+      progress.style.strokeDashoffset = '0';
+      break;
+    case 'completed':
+      document.getElementById('completeModal').classList.add('show');
+      label.textContent = '完成!';
+      const fragReward = dur===15?1:dur===25?2:4;
+      document.getElementById('completeDesc').textContent = `获得 ${fragReward} 个钥匙碎片 🔑`;
+      break;
+  }
+
+  if(state.uiState==='loading'){
+    document.getElementById('timerTime').textContent = '';
+    label.textContent = '加载中...';
+  }
+  if(state.uiState==='error'){
+    document.getElementById('timerTime').textContent = '⚠️';
+    label.textContent = '网络异常,请重试';
+  }
+}
+
+function renderMap(){
+  const container = document.getElementById('routeLine');
+  const progress = state.travelProgress;
+  document.getElementById('mapProgress').textContent = progress+'/10 城市已探索';
+  let html = '';
+  CITIES.forEach((city,i)=>{
+    const unlocked = (i+1)<=progress;
+    const isCurrent = (i+1)===progress;
+    const dotClass = isCurrent?'current':unlocked?'unlocked':'locked';
+    const nameClass = unlocked?'':'locked';
+    let statusHtml = '';
+    if(isCurrent) statusHtml='<span class="node-status current-badge">当前位置</span>';
+    else if(unlocked) statusHtml='<span class="node-status completed">已到达</span>';
+    else if((i+1)===progress+1) statusHtml='<span class="node-status need">需5碎片</span>';
+    else statusHtml='<span class="node-status need">🔒</span>';
+    html += `<div class="city-node" onclick="${unlocked?"navigateTo('explore');showToast('查看 "+city.name+" 详情')":"showToast('还需要碎片才能到达 "+city.name+"')"}">
+      <div class="node-dot ${dotClass}"></div>
+      <div class="node-info"><div class="node-name ${nameClass}">${city.name}</div><div class="node-sub ${nameClass}">${city.sub}</div></div>
+      ${statusHtml}
+    </div>`;
+    if(i<9) html += `<div class="node-connector ${unlocked?'active':''}"></div>`;
+  });
+  container.innerHTML = state.uiState==='loading'?'<div class="skeleton" style="height:500px;width:100%"></div>':
+    state.uiState==='error'?'<div class="error-state"><div class="error-icon">⚠️</div><div class="error-text">地图加载失败</div><button class="btn-secondary" onclick="changeUiState(\'normal\');render()">重试</button></div>':html;
+}
+
+function renderExplore(){
+  const city = CITIES.find(c=>c.id===state.city)||CITIES[0];
+  const events = EVENTS[state.city]||EVENTS.xian;
+  const container = document.getElementById('exploreContent');
+  if(state.uiState==='empty'){
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">🧭</div><div class="empty-text">开始冥想,踏上旅程吧</div></div>';
+    return;
+  }
+  let html = `
+    <button class="btn-secondary" onclick="switchTab('meditation')" style="margin-bottom:12px">← 返回冥想</button>
+    <div class="explore-city-img xian-img">🏛️</div>
+    <div style="color:#f5c842;font-size:18px;font-weight:600;margin-bottom:4px">${city.name}</div>
+    <div style="color:#94a3b8;font-size:12px;margin-bottom:12px">${city.sub}</div>
+    <div class="explore-desc">"${city.sub.includes('千年')?'大雁塔的晨钟暮鼓回荡了千年,城墙上的风从未停歇。':'这座城市的每一块砖石都在诉说古老的故事。'}"</div>
+    <div style="color:#e2e8f0;font-size:14px;font-weight:600;margin-bottom:10px">可探索事件</div>
+  `;
+  events.forEach((ev,i)=>{
+    const done = i===0;
+    html += `<div class="event-card ${done?'done':''}" onclick="${done?'showToast(\'已探索完毕\')':'openEvent('+i+')'}">
+      <div class="event-title">${done?'✅ ':''} ${ev.title} ${done?'<span class="event-done-tag">已完成</span>':''}</div>
+      <div class="event-reward">${ev.reward.icon} ${ev.reward.name}</div>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+function renderJournal(){
+  const container = document.getElementById('journalContent');
+  if(state.uiState==='empty'){
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">📖</div><div class="empty-text">开始冥想,踏上旅程吧<br><span style="font-size:12px;color:#475569">完成冥想后探索城市即可收集物品</span></div></div>';
+    return;
+  }
+  if(state.uiState==='loading'){
+    container.innerHTML = '<div style="padding:20px"><div class="skeleton" style="height:40px;margin-bottom:12px"></div><div class="skeleton" style="height:120px;margin-bottom:20px"></div><div class="skeleton" style="height:40px;margin-bottom:12px"></div><div class="skeleton" style="height:120px"></div></div>';
+    return;
+  }
+  let total=0,collected=0;
+  Object.values(JOURNAL).forEach(c=>{total+=c.items.length;collected+=c.items.filter(i=>i.collected).length;});
+  let html = `<div class="journal-progress">📖 旅行手账 ${collected}/${total}</div>`;
+  Object.entries(JOURNAL).forEach(([key,city])=>{
+    const unlocked = CITIES.findIndex(c=>c.id===key)<state.travelProgress;
+    html += `<div class="journal-city">
+      <div class="journal-city-name">${unlocked?'📍':'🔒'} ${city.name}</div>
+      <div class="journal-items">`;
+    city.items.forEach(item=>{
+      if(!unlocked){
+        html += `<div class="journal-item locked"><div class="journal-item-icon">❓</div><div class="journal-item-name">未解锁</div></div>`;
+      } else if(item.collected){
+        html += `<div class="journal-item collected"><div class="journal-item-icon">${item.icon}</div><div class="journal-item-name">${item.name}</div><div class="journal-item-type">${item.type}</div></div>`;
+      } else {
+        html += `<div class="journal-item locked"><div class="journal-item-icon">❓</div><div class="journal-item-name">未收集</div></div>`;
+      }
+    });
+    html += '</div></div>';
+  });
+  container.innerHTML = html;
+}
+
+// ========== 交互 ==========
+function switchTab(tab){
+  state.currentTab = tab;
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-item').forEach(t=>t.classList.remove('active'));
+  const pageMap = {meditation:'pageMeditation',map:'pageMap',explore:'pageExplore',journal:'pageJournal',profile:'pageProfile'};
+  document.getElementById(pageMap[tab]).classList.add('active');
+  const tabs = document.querySelectorAll('.tab-item');
+  const idx = ['meditation','map','explore','journal','profile'].indexOf(tab);
+  if(tabs[idx]) tabs[idx].classList.add('active');
+  render();
+}
+
+function navigateTo(tab){ switchTab(tab); }
+
+function startMeditation(){
+  state.remaining = state.duration * 60;
+  state.timerState = 'focusing';
+  document.getElementById('timerState').value = 'focusing';
+  render();
+  startCountdown();
+  showToast('冥想开始,环境白噪音已开启');
+}
+function pauseMeditation(){
+  stopCountdown();
+  state.timerState = 'paused';
+  document.getElementById('timerState').value = 'paused';
+  render();
+}
+function resumeMeditation(){
+  state.timerState = 'focusing';
+  document.getElementById('timerState').value = 'focusing';
+  render();
+  startCountdown();
+}
+function abandonMeditation(){
+  if(confirm('灵魂还没准备好远行,确定要中断吗?')){
+    stopCountdown();
+    state.remaining = state.duration * 60;
+    state.timerState = 'idle';
+    document.getElementById('timerState').value = 'idle';
+    render();
+    showToast('冥想已中断,不获得碎片');
+  }
+}
+function dismissComplete(){
+  document.getElementById('completeModal').classList.remove('show');
+  state.timerState = 'resting';
+  document.getElementById('timerState').value = 'resting';
+  render();
+}
+function pickDuration(el,dur){
+  document.querySelectorAll('.duration-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  state.duration = dur;
+  state.remaining = dur * 60;
+  document.getElementById('timerTime').textContent = dur+':00';
+}
+
+function openEvent(idx){
+  const events = EVENTS[state.city]||EVENTS.xian;
+  const ev = events[idx];
+  document.getElementById('modalTitle').textContent = ev.title;
+  document.getElementById('modalText').textContent = ev.desc;
+  document.getElementById('modalFact').textContent = ev.fact;
+  document.getElementById('rewardIcon').textContent = ev.reward.icon;
+  document.getElementById('rewardName').textContent = ev.reward.name;
+  document.getElementById('rewardDesc').textContent = ev.reward.desc;
+  document.getElementById('eventModal').classList.add('show');
+}
+function closeEventModal(){
+  document.getElementById('eventModal').classList.remove('show');
+}
+function collectReward(){
+  closeEventModal();
+  showToast('已收入手账 📖');
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.remove('show');
+  void t.offsetWidth;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+// 初始渲染
+render();
+</script>
+</body>
+</html>

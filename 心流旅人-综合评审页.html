@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>心流旅人 SoulTraveler · 综合评审页</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Noto Sans SC',sans-serif}
+
+/* 三栏布局 */
+.review-shell{display:flex;min-height:100vh;background:#0f172a}
+.switch-panel{width:320px;flex-shrink:0;background:rgba(15,23,42,0.98);border-right:1px solid rgba(255,255,255,0.06);padding:20px;overflow-y:auto;position:sticky;top:0;height:100vh;color:#e2e8f0}
+.phone-panel{width:460px;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:16px;position:sticky;top:0;height:100vh;overflow:hidden}
+.doc-panel{flex:1;background:#111827;border-left:1px solid rgba(255,255,255,0.06);overflow-y:auto;position:relative}
+
+/* 切换台样式 */
+.sp-title{font-size:18px;font-weight:700;color:#e2e8f0;margin-bottom:2px}
+.sp-subtitle{font-size:11px;color:#64748b;margin-bottom:20px}
+.sp-group{font-size:12px;font-weight:600;color:#6c63ff;margin:14px 0 6px;text-transform:uppercase;letter-spacing:1px}
+.sp-chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px}
+.sp-chip{padding:4px 10px;border-radius:16px;font-size:11px;cursor:pointer;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);transition:all .2s;color:#cbd5e1}
+.sp-chip:hover{background:rgba(108,99,255,0.15);border-color:#6c63ff}
+.sp-chip.active{background:#6c63ff;border-color:#6c63ff;color:#fff}
+.sp-select{width:100%;padding:6px 10px;border-radius:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#e2e8f0;font-size:12px;margin-bottom:6px}
+.sp-select option{background:#1e293b}
+.sp-btn{width:100%;padding:8px;border-radius:10px;background:linear-gradient(135deg,#6c63ff,#8b5cf6);color:#fff;font-size:13px;font-weight:600;border:none;cursor:pointer;margin-top:14px}
+.sp-note{margin-top:14px;padding:10px;background:rgba(108,99,255,0.08);border-radius:8px;font-size:10px;color:#94a3b8;line-height:1.5}
+
+/* 手机模型 */
+.phone-frame{width:390px;height:844px;background:#000;border-radius:48px;padding:12px;box-shadow:0 20px 60px rgba(0,0,0,0.5);flex-shrink:0;position:relative;transform:scale(var(--phone-scale,1));transform-origin:center center}
+.phone-notch{width:120px;height:28px;background:#000;border-radius:0 0 16px 16px;position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:20}
+.phone-screen{width:100%;height:100%;background:#0a0e27;border-radius:40px;overflow:hidden;position:relative}
+.status-bar{height:48px;display:flex;justify-content:space-between;align-items:center;padding:0 24px;font-size:12px;color:#e2e8f0;z-index:10}
+.page{display:none;height:calc(100% - 48px - 60px);overflow-y:auto;position:relative}
+.page.active{display:flex;flex-direction:column}
+.tab-bar{height:60px;display:flex;background:rgba(10,14,39,0.95);border-top:1px solid rgba(255,255,255,0.08);position:absolute;bottom:0;left:0;right:0;border-radius:0 0 40px 40px;z-index:10}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;color:#64748b;font-size:9px;gap:2px;transition:color .2s}
+.tab-item.active{color:#6c63ff}
+.tab-item .ti{font-size:18px}
+
+/* 原型内部样式 */
+.med-scene{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;padding:12px}
+.scene-bg{position:absolute;inset:0;opacity:0.35}
+.scene-bg.xian{background:linear-gradient(180deg,#4a3728 0%,#2d1f14 40%,#0a0e27 100%)}
+.scene-bg.dunhuang{background:linear-gradient(180deg,#5c4a2f 0%,#3d2d1a 40%,#0a0e27 100%)}
+.scene-bg.samarkand{background:linear-gradient(180deg,#1e3a5f 0%,#152744 40%,#0a0e27 100%)}
+.city-lbl{position:relative;z-index:2;color:#f5c842;font-size:12px;font-weight:500;margin-bottom:4px}
+.frag-bar{position:relative;z-index:2;display:flex;align-items:center;gap:4px;margin-bottom:12px}
+.fd{width:8px;height:8px;border-radius:50%}
+.fd.f{background:#f5c842;box-shadow:0 0 4px rgba(245,200,66,0.4)}
+.fd.e{background:#2a2a4a;border:1px solid #3a3a5a}
+.ft{font-size:10px;color:#94a3b8}
+.char-box{width:80px;height:100px;position:relative;z-index:2;margin:12px 0}
+.cb{width:64px;height:56px;background:radial-gradient(ellipse,#e0d6ff 30%,#b8a9f0 100%);border-radius:50% 50% 40% 40%;margin:0 auto;position:relative}
+.ch{position:absolute;width:6px;height:12px;background:#f5c842;border-radius:3px;top:-8px}
+.ch.l{left:18px;transform:rotate(-15deg)}
+.ch.r{right:18px;transform:rotate(15deg)}
+.ce{display:flex;gap:12px;justify-content:center;margin-top:16px}
+.ced{width:6px;height:6px;background:#2a2a4a;border-radius:50%}
+.ced.closed{height:2px;border-radius:2px;margin-top:2px}
+.cbl{width:6px;height:6px;background:#f5c842;border-radius:50%;margin:6px auto 0}
+.cg{position:absolute;inset:-16px;border-radius:50%;background:radial-gradient(circle,rgba(108,99,255,0.25) 0%,transparent 70%);animation:breathe 4s ease-in-out infinite}
+@keyframes breathe{0%,100%{opacity:0.3;transform:scale(0.9)}50%{opacity:0.7;transform:scale(1.1)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.idle-c .cb{animation:float 3s ease-in-out infinite}
+.focus-c .cg{display:block}
+.idle-c .cg{display:none}
+.t-ring{width:150px;height:150px;margin:0 auto;position:relative;z-index:2}
+.t-ring svg{transform:rotate(-90deg)}
+.t-ring circle{fill:none;stroke-width:3}
+.t-ring .bg{stroke:rgba(255,255,255,0.06)}
+.t-ring .prog{stroke:#6c63ff;stroke-linecap:round;transition:stroke-dashoffset .5s}
+.t-txt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.t-time{font-size:32px;font-weight:300;color:#e2e8f0;letter-spacing:2px}
+.t-label{font-size:10px;color:#94a3b8;margin-top:2px}
+.btn-p{padding:10px 28px;border-radius:24px;background:linear-gradient(135deg,#6c63ff,#8b5cf6);color:#fff;font-size:13px;font-weight:600;border:none;cursor:pointer;z-index:2;position:relative}
+.btn-s{padding:6px 16px;border-radius:16px;background:rgba(255,255,255,0.06);color:#e2e8f0;font-size:11px;border:1px solid rgba(255,255,255,0.12);cursor:pointer}
+.dur-sel{display:flex;gap:6px;margin-top:10px;z-index:2;position:relative}
+.dur-c{padding:4px 12px;border-radius:16px;font-size:11px;color:#94a3b8;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);cursor:pointer}
+.dur-c.active{color:#fff;background:rgba(108,99,255,0.3);border-color:#6c63ff}
+.map-c{padding:12px;flex:1}
+.map-t{color:#e2e8f0;font-size:14px;font-weight:600;margin-bottom:8px}
+.nn{display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer}
+.nd{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.nd.ul{background:#f5c842;box-shadow:0 0 6px rgba(245,200,66,0.4)}
+.nd.cur{background:#6c63ff;box-shadow:0 0 10px rgba(108,99,255,0.5)}
+.nd.lk{background:#2a2a4a;border:1px solid #3a3a5a}
+.ni{flex:1}
+.ni-n{color:#e2e8f0;font-size:12px}
+.ni-n.lk{color:#64748b}
+.ni-s{color:#94a3b8;font-size:10px}
+.nc{width:2px;height:12px;background:rgba(255,255,255,0.08);margin-left:5px}
+.nc.act{background:linear-gradient(180deg,#f5c842,rgba(245,200,66,0.15))}
+.ns{font-size:9px;padding:2px 6px;border-radius:8px;background:rgba(255,255,255,0.04);color:#64748b}
+.ns.done{background:rgba(245,200,66,0.1);color:#f5c842}
+.ns.curr{background:rgba(108,99,255,0.15);color:#a78bfa}
+.j-c{padding:12px;flex:1}
+.j-prog{color:#f5c842;font-size:12px;font-weight:600;margin-bottom:10px}
+.j-city{margin-bottom:14px}
+.j-cn{color:#e2e8f0;font-size:12px;font-weight:600;margin-bottom:6px}
+.j-items{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.j-item{background:rgba(255,255,255,0.04);border-radius:8px;padding:8px;text-align:center;min-height:70px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.j-item.coll{border:1px solid rgba(245,200,66,0.15)}
+.j-item .ji-i{font-size:20px;margin-bottom:2px}
+.j-item .ji-n{font-size:9px;color:#e2e8f0}
+.j-item .ji-t{font-size:8px;color:#64748b}
+.j-item.lk{opacity:0.4}
+.toast2{display:none;position:absolute;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(108,99,255,0.9);color:#fff;padding:6px 16px;border-radius:16px;font-size:11px;z-index:40;white-space:nowrap}
+.toast2.show{display:block;animation:fi 2s ease}
+@keyframes fi{0%{opacity:0}10%{opacity:1}85%{opacity:1}100%{opacity:0}}
+.cm{display:none;position:absolute;inset:0;background:rgba(10,14,39,0.92);z-index:30;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+.cm.show{display:flex}
+.cm-e{font-size:48px;margin-bottom:12px}
+.cm-t{color:#f5c842;font-size:18px;font-weight:700;margin-bottom:6px}
+.cm-d{color:#94a3b8;font-size:12px;margin-bottom:16px}
+.p-c{padding:12px;flex:1}
+.p-h{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.p-av{width:40px;height:40px;background:linear-gradient(135deg,#6c63ff,#8b5cf6);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px}
+.sg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px}
+.sc{background:rgba(255,255,255,0.04);border-radius:8px;padding:8px;text-align:center}
+.sc-n{color:#f5c842;font-size:18px;font-weight:700}
+.sc-l{color:#94a3b8;font-size:9px}
+.si{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:11px;color:#e2e8f0}
+.tgl{width:32px;height:18px;border-radius:9px;background:#6c63ff;position:relative;cursor:pointer}
+.tgl::after{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:#fff;top:2px;right:2px}
+
+/* 右侧文档区 */
+.doc-inner{max-width:720px;padding:32px 40px 80px;color:#e2e8f0}
+.doc-header{margin-bottom:32px;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:24px}
+.doc-header h1{font-size:28px;font-weight:700;margin-bottom:8px}
+.doc-meta{display:flex;gap:16px;font-size:12px;color:#94a3b8;flex-wrap:wrap}
+.doc-meta span{background:rgba(108,99,255,0.1);padding:2px 10px;border-radius:12px}
+.doc-toc{position:sticky;top:20px;float:right;width:180px;margin-left:24px;background:rgba(255,255,255,0.03);border-radius:12px;padding:14px;font-size:11px;color:#94a3b8;max-height:calc(100vh - 40px);overflow-y:auto}
+.doc-toc a{display:block;padding:4px 0;color:#94a3b8;text-decoration:none;transition:color .2s}
+.doc-toc a:hover{color:#6c63ff}
+.doc-toc .toc-title{font-size:12px;font-weight:600;color:#e2e8f0;margin-bottom:8px}
+.doc-panel h2{font-size:22px;font-weight:700;color:#e2e8f0;margin:32px 0 12px;border-left:3px solid #6c63ff;padding-left:12px}
+.doc-panel h3{font-size:16px;font-weight:600;color:#e2e8f0;margin:20px 0 8px}
+.doc-panel p{color:#cbd5e1;font-size:13px;line-height:1.9;margin-bottom:12px}
+.doc-panel ul,.doc-panel ol{color:#cbd5e1;font-size:13px;line-height:1.8;margin:0 0 12px 20px}
+.doc-panel table{width:100%;border-collapse:collapse;margin:12px 0;font-size:12px}
+.doc-panel th{background:rgba(108,99,255,0.1);padding:8px 10px;text-align:left;color:#e2e8f0;border:1px solid rgba(255,255,255,0.06)}
+.doc-panel td{padding:8px 10px;border:1px solid rgba(255,255,255,0.06);color:#cbd5e1}
+.doc-panel blockquote{border-left:3px solid #f5c842;padding:8px 16px;margin:12px 0;background:rgba(245,200,66,0.05);border-radius:0 8px 8px 0;font-size:13px;color:#f5c842}
+.doc-panel .checklist{list-style:none;margin-left:0}
+.doc-panel .checklist li{padding:3px 0}
+.doc-panel .checklist li::before{content:'✅ ';font-size:12px}
+</style>
+</head>
+<body>
+
+<div class="review-shell">
+
+<!-- ========== 左栏:切换台 ========== -->
+<div class="switch-panel">
+  <div class="sp-title">心流旅人</div>
+  <div class="sp-subtitle">SoulTraveler · 综合评审控制台</div>
+
+  <div class="sp-group">当前城市</div>
+  <div class="sp-chips" id="rCityChips">
+    <div class="sp-chip active" data-city="xian" onclick="rSelectCity(this)">西安</div>
+    <div class="sp-chip" data-city="dunhuang" onclick="rSelectCity(this)">敦煌</div>
+    <div class="sp-chip" data-city="samarkand" onclick="rSelectCity(this)">撒马尔罕</div>
+    <div class="sp-chip" data-city="isfahan" onclick="rSelectCity(this)">伊斯法罕</div>
+    <div class="sp-chip" data-city="istanbul" onclick="rSelectCity(this)">伊斯坦布尔</div>
+  </div>
+
+  <div class="sp-group">专注时长</div>
+  <div class="sp-chips">
+    <div class="sp-chip" data-d="15" onclick="rDur(this)">15min</div>
+    <div class="sp-chip active" data-d="25" onclick="rDur(this)">25min</div>
+    <div class="sp-chip" data-d="45" onclick="rDur(this)">45min</div>
+  </div>
+
+  <div class="sp-group">番茄钟状态</div>
+  <select class="sp-select" id="rState" onchange="rStopTimer();rS.timerState=this.value;if(this.value==='idle'){rS.remaining=rS.dur*60}else if(this.value==='focusing'){rS.remaining=Math.floor(rS.dur*60*0.74);rStartTimer()}else if(this.value==='paused'){rS.remaining=Math.floor(rS.dur*60*0.74)};rRender()">
+    <option value="idle">未开始</option>
+    <option value="focusing">冥想中</option>
+    <option value="paused">已暂停</option>
+    <option value="resting">休息中</option>
+    <option value="completed">冥想完成</option>
+  </select>
+
+  <div class="sp-group">旅行进度</div>
+  <select class="sp-select" id="rProgress" onchange="rS.progress=+this.value;rRender()">
+    <option value="1">起点(1城)</option>
+    <option value="4" selected>途中(4城)</option>
+    <option value="8">接近终点(8城)</option>
+    <option value="10">全部完成</option>
+  </select>
+
+  <div class="sp-group">界面状态</div>
+  <select class="sp-select" id="rUI" onchange="rS.ui=this.value;rRender()">
+    <option value="normal">正常态</option>
+    <option value="empty">空态(首次使用)</option>
+    <option value="loading">加载态</option>
+    <option value="error">失败态</option>
+  </select>
+
+  <button class="sp-btn" onclick="rRender()">应用到原型</button>
+
+  <div class="sp-note">
+    <strong>评审指引</strong><br>
+    左侧切换变量后,中间手机原型实时更新。手机屏内按钮均可点击交互。右侧为完整 PRD 文档,可独立滚动阅读。
+  </div>
+</div>
+
+<!-- ========== 中栏:手机原型 ========== -->
+<div class="phone-panel">
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div class="phone-screen" id="ps">
+      <div class="status-bar"><span>9:41</span><span>心流旅人</span><span>📶🔋</span></div>
+
+      <!-- 冥想页 -->
+      <div class="page active" id="pMed">
+        <div class="med-scene">
+          <div class="scene-bg xian" id="rBg"></div>
+          <div class="city-lbl" id="rCity">📍 西安 · 千年古都</div>
+          <div class="frag-bar" id="rFrag"></div>
+          <div class="char-box idle-c" id="rChar">
+            <div class="cg"></div>
+            <div class="cb"><div class="ch l"></div><div class="ch r"></div><div class="ce" id="rEyes"><div class="ced"></div><div class="ced"></div></div><div class="cbl"></div></div>
+          </div>
+          <div class="t-ring"><svg width="150" height="150" viewBox="0 0 150 150"><circle class="bg" cx="75" cy="75" r="72"/><circle class="prog" id="rProg" cx="75" cy="75" r="72" stroke-dasharray="452" stroke-dashoffset="0"/></svg><div class="t-txt"><div class="t-time" id="rTime">25:00</div><div class="t-label" id="rLabel">选择时长开始冥想</div></div></div>
+          <div id="rIdle" style="z-index:2;position:relative;text-align:center;margin-top:8px">
+            <button class="btn-p" onclick="rS.remaining=rS.dur*60;rS.timerState='focusing';document.getElementById('rState').value='focusing';rRender();rStartTimer();rToast('冥想开始')">开始冥想 🧘</button>
+            <div class="dur-sel"><div class="dur-c" onclick="rPickD(this,15)">15min</div><div class="dur-c active" onclick="rPickD(this,25)">25min</div><div class="dur-c" onclick="rPickD(this,45)">45min</div></div>
+          </div>
+          <div id="rFocus" style="display:none;z-index:2;position:relative">
+            <div style="display:flex;gap:8px;justify-content:center">
+              <button class="btn-s" onclick="rStopTimer();rS.timerState='paused';document.getElementById('rState').value='paused';rRender()">⏸ 暂停</button>
+              <button class="btn-s" style="color:#ef4444;border-color:rgba(239,68,68,0.2)" onclick="if(confirm('确定放弃?')){rStopTimer();rS.remaining=rS.dur*60;rS.timerState='idle';document.getElementById('rState').value='idle';rRender();rToast('已放弃')}">✕ 放弃</button>
+            </div>
+          </div>
+          <div id="rPaused" style="display:none;z-index:2;position:relative">
+            <div style="display:flex;gap:8px;justify-content:center">
+              <button class="btn-p" style="font-size:12px" onclick="rS.timerState='focusing';document.getElementById('rState').value='focusing';rRender();rStartTimer()">▶ 继续</button>
+              <button class="btn-s" style="color:#ef4444;border-color:rgba(239,68,68,0.2)" onclick="if(confirm('确定放弃?')){rStopTimer();rS.remaining=rS.dur*60;rS.timerState='idle';document.getElementById('rState').value='idle';rRender();rToast('已放弃')}">✕ 放弃</button>
+            </div>
+          </div>
+          <div id="rRest" style="display:none;z-index:2;position:relative;text-align:center">
+            <button class="btn-p" onclick="rTab('explore')" style="background:linear-gradient(135deg,#f5c842,#e6a817);color:#1a1a2e;font-size:12px">探索当前城市 🔍</button>
+            <div style="color:#94a3b8;font-size:10px;margin-top:4px">休息中 · 5:00</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 地图页 -->
+      <div class="page" id="pMap"><div class="map-c"><div class="map-t">🗺️ 丝绸之路</div><div style="color:#94a3b8;font-size:11px;margin-bottom:10px" id="rMapP">4/10 城市已探索</div><div id="rRoute"></div></div></div>
+
+      <!-- 探索页 -->
+      <div class="page" id="pExplore"><div class="map-c" id="rExplore"></div></div>
+
+      <!-- 手账页 -->
+      <div class="page" id="pJournal"><div class="j-c" id="rJournal"></div></div>
+
+      <!-- 个人中心 -->
+      <div class="page" id="pProfile">
+        <div class="p-c">
+          <div class="p-h"><div class="p-av">🧘</div><div><div style="color:#e2e8f0;font-size:14px;font-weight:600">灵魂旅人</div><div style="color:#94a3b8;font-size:10px">远行者 · Lv.5</div></div></div>
+          <div class="sg"><div class="sc"><div class="sc-n">1250</div><div class="sc-l">专注分钟</div></div><div class="sc"><div class="sc-n">52</div><div class="sc-l">番茄数</div></div><div class="sc"><div class="sc-n">7</div><div class="sc-l">连续天数</div></div></div>
+          <div style="background:rgba(108,99,255,0.08);border-radius:8px;padding:10px;margin-bottom:14px"><div style="color:#e2e8f0;font-size:11px;font-weight:500;margin-bottom:4px">当前旅程</div><div style="color:#f5c842;font-size:13px;font-weight:600">📍 伊斯法罕 · 半天下之城</div><div style="color:#94a3b8;font-size:10px;margin-top:2px">旅行进度 40% · 收集物 14/35</div></div>
+          <div style="color:#e2e8f0;font-size:12px;font-weight:600;margin-bottom:8px">设置</div>
+          <div class="si"><span>默认专注时长</span><span style="color:#94a3b8">25 分钟</span></div>
+          <div class="si"><span>环境白噪音</span><div class="tgl"></div></div>
+          <div class="si"><span>振动反馈</span><div class="tgl"></div></div>
+        </div>
+      </div>
+
+      <!-- 完成弹窗 -->
+      <div class="cm" id="rComplete"><div class="cm-e">✨</div><div class="cm-t">冥想完成!</div><div class="cm-d" id="rCompD">获得 2 个钥匙碎片 🔑</div><button class="btn-p" onclick="document.getElementById('rComplete').classList.remove('show');rS.timerState='resting';document.getElementById('rState').value='resting';rRender()" style="font-size:12px">继续</button></div>
+
+      <div class="toast2" id="rToast"></div>
+
+      <div class="tab-bar">
+        <div class="tab-item active" onclick="rTab('meditation')"><span class="ti">🧘</span>冥想</div>
+        <div class="tab-item" onclick="rTab('map')"><span class="ti">🗺️</span>地图</div>
+        <div class="tab-item" onclick="rTab('explore')"><span class="ti">🔍</span>探索</div>
+        <div class="tab-item" onclick="rTab('journal')"><span class="ti">📖</span>手账</div>
+        <div class="tab-item" onclick="rTab('profile')"><span class="ti">👤</span>我的</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 右栏:PRD 文档 ========== -->
+<div class="doc-panel">
+  <div class="doc-toc">
+    <div class="toc-title">📑 目录</div>
+    <a href="#d1">1. 文档信息</a>
+    <a href="#d2">2. 为什么做</a>
+    <a href="#d3">3. 做给谁</a>
+    <a href="#d4">4. 做什么</a>
+    <a href="#d5">5. 怎么做</a>
+    <a href="#d6">6. 不做什么</a>
+    <a href="#d7">7. 合规与风险</a>
+    <a href="#d8">8. 下游转译输入</a>
+  </div>
+
+  <div class="doc-inner">
+    <div class="doc-header">
+      <h1>心流旅人 SoulTraveler</h1>
+      <div style="color:#94a3b8;font-size:14px;margin-bottom:12px">"每一次专注,都是一次远行。"</div>
+      <div class="doc-meta">
+        <span>V1.0-Draft</span>
+        <span>MVP</span>
+        <span>微信小程序</span>
+        <span>负责人:邓惠文</span>
+      </div>
+    </div>
+
+    <h2 id="d1">第 1 章 · 文档信息</h2>
+    <table><thead><tr><th>项</th><th>内容</th></tr></thead><tbody>
+      <tr><td>产品名</td><td>心流旅人(SoulTraveler)</td></tr>
+      <tr><td>版本号</td><td>V1.0-Draft</td></tr>
+      <tr><td>阶段性质</td><td>MVP</td></tr>
+      <tr><td>目标平台</td><td>微信小程序</td></tr>
+      <tr><td>立项日期</td><td>2025-03</td></tr>
+    </tbody></table>
+
+    <h2 id="d2">第 2 章 · 为什么做(Why)</h2>
+    <h3>2.1 市场背景</h3>
+    <p>当代职场人长期困于办公室格子间,普遍面临焦虑、疲惫和缺乏探索世界的时间。现有番茄钟产品存在审美疲劳:Forest(种树)已运营多年、用户新鲜感消退;潮汐(白噪音)功能单一。市面上没有一款番茄钟产品将"叙事 + 收集 + 探索"结合,形成开放世界式的专注体验。</p>
+
+    <h3>2.2 核心痛点</h3>
+    <blockquote>用户缺少一个持续驱动专注的正反馈循环——现有番茄钟只有倒计时,没有"期待感"。</blockquote>
+
+    <h3>2.3 核心假设</h3>
+    <blockquote>用户愿意为了"探索下一个城市"而持续完成番茄钟专注——即"好奇心驱动的专注"是否成立。</blockquote>
+
+    <h3>2.4 成功指标</h3>
+    <table><thead><tr><th>指标</th><th>类型</th><th>目标值</th></tr></thead><tbody>
+      <tr><td>解锁第2城市用户占比</td><td>北极星</td><td>≥ 70%</td></tr>
+      <tr><td>走完全程率</td><td>留存</td><td>≥ 20%</td></tr>
+      <tr><td>日均番茄完成数</td><td>激活</td><td>≥ 3个</td></tr>
+      <tr><td>单次冥想完成率</td><td>留存</td><td>≥ 85%</td></tr>
+      <tr><td>次日留存率</td><td>留存</td><td>≥ 40%</td></tr>
+      <tr><td>7日留存率</td><td>留存</td><td>≥ 25%</td></tr>
+    </tbody></table>
+
+    <h2 id="d3">第 3 章 · 做给谁(Who)</h2>
+    <h3>3.1 目标用户画像</h3>
+    <p><strong>主画像:</strong>18-35岁的办公室白领、大学生、考研备考者。身体困于格子间,渴望远方。当前替代方案(Forest/潮汐)缺少叙事驱动,几周后新鲜感消退。</p>
+    <p><strong>次要画像:</strong>自由职业者(缺少外部节奏约束)、冥想爱好者(觉得纯冥想APP太严肃)。</p>
+
+    <h3>3.2 核心场景</h3>
+    <ul>
+      <li>作为白领,工作间隙通过冥想番茄钟集中精力,获得探索世界的乐趣</li>
+      <li>作为考研备考者,通过积累碎片解锁新城市,用好奇心驱动长期学习节奏</li>
+      <li>作为追求仪式感的用户,翻看旅行手账记录专注旅程,获得收藏满足感</li>
+    </ul>
+
+    <h2 id="d4">第 4 章 · 做什么(What)</h2>
+    <h3>一句话定位</h3>
+    <blockquote>心流旅人是一款将番茄钟专注与世界探索结合的微信小程序,让每一次专注都成为一次灵魂远行。</blockquote>
+
+    <h3>4.1 功能清单(MVP)</h3>
+    <table><thead><tr><th>功能组</th><th>功能</th><th>描述</th></tr></thead><tbody>
+      <tr><td>冥想专注</td><td>番茄钟倒计时</td><td>15/25/45分钟三档</td></tr>
+      <tr><td>冥想专注</td><td>冥想场景+环境音</td><td>每城专属场景图和白噪音</td></tr>
+      <tr><td>冥想专注</td><td>碎片奖励</td><td>完成后按时长获得碎片</td></tr>
+      <tr><td>地图解锁</td><td>丝绸之路地图</td><td>10城路线,迷雾覆盖</td></tr>
+      <tr><td>地图解锁</td><td>城市解锁</td><td>5碎片解锁下一城</td></tr>
+      <tr><td>探索收集</td><td>城市探索事件</td><td>每城3个随机事件</td></tr>
+      <tr><td>探索收集</td><td>旅行手账</td><td>按城市展示收集物</td></tr>
+      <tr><td>个人中心</td><td>专注数据统计</td><td>累计分钟数/番茄数/连续天数</td></tr>
+    </tbody></table>
+
+    <h3>4.2 丝绸之路 10 城</h3>
+    <table><thead><tr><th>序号</th><th>城市</th><th>副标题</th><th>冥想场景音</th></tr></thead><tbody>
+      <tr><td>1</td><td>西安</td><td>千年古都</td><td>古城风声+钟鼓楼</td></tr>
+      <tr><td>2</td><td>敦煌</td><td>大漠明珠</td><td>沙漠风+驼铃</td></tr>
+      <tr><td>3</td><td>撒马尔罕</td><td>蓝色穹顶之城</td><td>唤拜+集市远声</td></tr>
+      <tr><td>4</td><td>伊斯法罕</td><td>半天下之城</td><td>流水+夜虫鸣</td></tr>
+      <tr><td>5</td><td>伊斯坦布尔</td><td>横跨欧亚</td><td>海浪+海鸥+船笛</td></tr>
+      <tr><td>6</td><td>雅典</td><td>智慧之城</td><td>地中海风+蝉鸣</td></tr>
+      <tr><td>7</td><td>罗马</td><td>永恒之城</td><td>喷泉水声+鸽子</td></tr>
+      <tr><td>8</td><td>巴黎</td><td>光之城</td><td>手风琴+河水</td></tr>
+      <tr><td>9</td><td>伦敦</td><td>雾都</td><td>雨声+大本钟</td></tr>
+      <tr><td>10</td><td>雷克雅未克</td><td>世界尽头</td><td>极致安静+冰裂声</td></tr>
+    </tbody></table>
+
+    <h2 id="d5">第 5 章 · 怎么做(技术意图)</h2>
+    <p>微信小程序原生开发(WXML+WXSS+JS),微信云开发做后端(云数据库+云函数),本地Storage缓存。运行时无AI调用;AI用于离线内容生产(Midjourney生成插画,GPT-4生成文案,人工审核)。AI将内容生产成本降低95%以上。</p>
+    <p>角色"云宝"(云兽)由AI图像生成多状态立绘,人工确保风格一致性。音频素材购买授权素材库(AI音频质量暂不达标)。</p>
+
+    <h2 id="d6">第 6 章 · 不做什么</h2>
+    <table><thead><tr><th>事项</th><th>原因</th><th>类型</th></tr></thead><tbody>
+      <tr><td>团队协作/项目管理</td><td>定位个人专注工具</td><td>客户准入边界</td></tr>
+      <tr><td>重度游戏体验</td><td>核心是专注辅助</td><td>产品能力边界</td></tr>
+      <tr><td>社交功能</td><td>MVP先验证核心循环</td><td>时段限制(V1.5)</td></tr>
+      <tr><td>付费功能</td><td>MVP目标是验证假设</td><td>时段限制(V3.0)</td></tr>
+    </tbody></table>
+
+    <h2 id="d7">第 7 章 · 合规与风险</h2>
+    <p>仅收集微信openid和使用行为数据,首次使用展示隐私政策弹窗。所有文案经人工审核确保文化准确性。AI生成插画需确认商用授权。</p>
+    <p><strong>免责声明:</strong>本产品提供专注辅助和放松体验,不构成医学冥想治疗或心理健康建议。</p>
+
+    <h2 id="d8">第 8 章 · 下游转译输入</h2>
+    <h3>8.1 核心业务维度</h3>
+    <table><thead><tr><th>维度</th><th>可选值</th><th>控制台</th></tr></thead><tbody>
+      <tr><td>当前城市</td><td>西安/敦煌/撒马尔罕/伊斯法罕/伊斯坦布尔/雅典/罗马/巴黎/伦敦/雷克雅未克</td><td>是</td></tr>
+      <tr><td>专注时长</td><td>15/25/45 分钟</td><td>是</td></tr>
+      <tr><td>番茄钟状态</td><td>未开始/冥想中/已暂停/休息中/已完成</td><td>是</td></tr>
+      <tr><td>旅行进度</td><td>1城/4城/8城/10城</td><td>是</td></tr>
+    </tbody></table>
+
+    <h3>8.5 技术选型</h3>
+    <table><thead><tr><th>项</th><th>口径</th></tr></thead><tbody>
+      <tr><td>目标平台</td><td>微信小程序</td></tr>
+      <tr><td>前端形态</td><td>微信小程序原生</td></tr>
+      <tr><td>后端与存储</td><td>微信云开发+本地Storage</td></tr>
+      <tr><td>AI调用方</td><td>无运行时AI调用</td></tr>
+      <tr><td>构建工具</td><td>Claude Code</td></tr>
+    </tbody></table>
+
+    <h3>附录A · 自查清单</h3>
+    <ul class="checklist">
+      <li>第1-8章全部已填,无占位符</li>
+      <li>全文无字段定义表/schema</li>
+      <li>全文无置信度阈值/性能指标</li>
+      <li>第8章只写用户可见口径</li>
+      <li>成功指标只有业务指标</li>
+      <li>Journey只写用户体验</li>
+      <li>核心功能4个,均有体验流程</li>
+      <li>技术选型最小口径已填</li>
+    </ul>
+  </div>
+</div>
+
+</div>
+
+<script>
+const rS={city:'xian',dur:25,timerState:'idle',progress:4,ui:'normal',remaining:25*60};
+let rTimer=null;
+function rStartTimer(){
+  if(rTimer)clearInterval(rTimer);
+  rTimer=setInterval(()=>{
+    if(rS.timerState!=='focusing')return;
+    rS.remaining--;
+    if(rS.remaining<=0){rS.remaining=0;clearInterval(rTimer);rTimer=null;rS.timerState='completed';rRender();return;}
+    const m=Math.floor(rS.remaining/60);const s=rS.remaining%60;
+    document.getElementById('rTime').textContent=m+':'+(s<10?'0':'')+s;
+    const total=rS.dur*60;const pct=(total-rS.remaining)/total;
+    const circ=2*Math.PI*72;
+    document.getElementById('rProg').style.strokeDashoffset=(circ*(1-pct)).toFixed(1);
+  },1000);
+}
+function rStopTimer(){if(rTimer){clearInterval(rTimer);rTimer=null;}}
+const RC=[
+  {id:'xian',name:'西安',sub:'千年古都',bg:'xian'},
+  {id:'dunhuang',name:'敦煌',sub:'大漠明珠',bg:'dunhuang'},
+  {id:'samarkand',name:'撒马尔罕',sub:'蓝色穹顶之城',bg:'samarkand'},
+  {id:'isfahan',name:'伊斯法罕',sub:'半天下之城',bg:'samarkand'},
+  {id:'istanbul',name:'伊斯坦布尔',sub:'横跨欧亚',bg:'samarkand'},
+  {id:'athens',name:'雅典',sub:'智慧之城',bg:'samarkand'},
+  {id:'rome',name:'罗马',sub:'永恒之城',bg:'samarkand'},
+  {id:'paris',name:'巴黎',sub:'光之城',bg:'samarkand'},
+  {id:'london',name:'伦敦',sub:'雾都',bg:'samarkand'},
+  {id:'reykjavik',name:'雷克雅未克',sub:'世界尽头',bg:'samarkand'}
+];
+function rSelectCity(el){document.querySelectorAll('#rCityChips .sp-chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');rS.city=el.dataset.city;rRender()}
+function rDur(el){el.parentElement.querySelectorAll('.sp-chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');rS.dur=+el.dataset.d;rS.remaining=rS.dur*60;rRender()}
+function rPickD(el,d){el.parentElement.querySelectorAll('.dur-c').forEach(c=>c.classList.remove('active'));el.classList.add('active');rS.dur=d;rS.remaining=d*60;document.getElementById('rTime').textContent=d+':00'}
+function rTab(t){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.tab-item').forEach(i=>i.classList.remove('active'));const m={meditation:'pMed',map:'pMap',explore:'pExplore',journal:'pJournal',profile:'pProfile'};document.getElementById(m[t]).classList.add('active');const tabs=document.querySelectorAll('.tab-item');const idx=['meditation','map','explore','journal','profile'].indexOf(t);if(tabs[idx])tabs[idx].classList.add('active');rRender()}
+function rToast(m){const t=document.getElementById('rToast');t.textContent=m;t.classList.remove('show');void t.offsetWidth;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000)}
+
+function rRender(){
+  const c=RC.find(x=>x.id===rS.city)||RC[0];
+  document.getElementById('rBg').className='scene-bg '+c.bg;
+  document.getElementById('rCity').textContent='📍 '+c.name+' · '+c.sub;
+  const frag=rS.timerState==='completed'?5:3;
+  const nx=RC.find(x=>x.id===c.id)?RC[RC.indexOf(RC.find(x=>x.id===c.id))+1]:null;
+  let dots='';for(let i=0;i<5;i++)dots+=`<div class="fd ${i<frag?'f':'e'}"></div>`;
+  document.getElementById('rFrag').innerHTML=`<span class="ft">🔑 ${nx?'前往'+nx.name:'已完成'}</span>${dots}<span class="ft">${frag}/5</span>`;
+  document.getElementById('rTime').textContent=rS.dur+':00';
+  const ch=document.getElementById('rChar');
+  const ey=document.getElementById('rEyes');
+  document.getElementById('rIdle').style.display='none';
+  document.getElementById('rFocus').style.display='none';
+  document.getElementById('rPaused').style.display='none';
+  document.getElementById('rRest').style.display='none';
+  ch.className='char-box';ey.innerHTML='<div class="ced"></div><div class="ced"></div>';
+  switch(rS.timerState){
+    case 'idle':ch.classList.add('idle-c');document.getElementById('rIdle').style.display='';document.getElementById('rLabel').textContent='选择时长开始冥想';document.getElementById('rProg').style.strokeDashoffset='0';break;
+    case 'focusing':{ch.classList.add('focus-c');ey.innerHTML='<div class="ced closed"></div><div class="ced closed"></div>';document.getElementById('rFocus').style.display='';const fm=Math.floor(rS.remaining/60),fs=rS.remaining%60;document.getElementById('rTime').textContent=fm+':'+(fs<10?'0':'')+fs;document.getElementById('rLabel').textContent='冥想中...';const fc=2*Math.PI*72,fp=(rS.dur*60-rS.remaining)/(rS.dur*60);document.getElementById('rProg').style.strokeDashoffset=(fc*(1-fp)).toFixed(1);break;}
+    case 'paused':{ch.classList.add('idle-c');document.getElementById('rPaused').style.display='';const pm=Math.floor(rS.remaining/60),ps=rS.remaining%60;document.getElementById('rTime').textContent=pm+':'+(ps<10?'0':'')+ps;document.getElementById('rLabel').textContent='已暂停';const pc=2*Math.PI*72,pp=(rS.dur*60-rS.remaining)/(rS.dur*60);document.getElementById('rProg').style.strokeDashoffset=(pc*(1-pp)).toFixed(1);break;}
+    case 'resting':ch.classList.add('idle-c');document.getElementById('rRest').style.display='';document.getElementById('rTime').textContent='5:00';document.getElementById('rLabel').textContent='休息中';document.getElementById('rProg').style.strokeDashoffset='0';break;
+    case 'completed':document.getElementById('rComplete').classList.add('show');document.getElementById('rCompD').textContent=`获得 ${rS.dur===15?1:rS.dur===25?2:4} 个钥匙碎片 🔑`;break;
+  }
+  // 地图
+  document.getElementById('rMapP').textContent=rS.progress+'/10 城市已探索';
+  let mh='';RC.forEach((city,i)=>{
+    const ul=(i+1)<=rS.progress;const ic=(i+1)===rS.progress;
+    const dc=ic?'cur':ul?'ul':'lk';const nc=ul?'':'lk';
+    let st='';if(ic)st='<span class="ns curr">当前</span>';else if(ul)st='<span class="ns done">已到达</span>';else if((i+1)===rS.progress+1)st='<span class="ns">需5碎片</span>';else st='<span class="ns">🔒</span>';
+    mh+=`<div class="nn" onclick="rToast('${ul?city.name:('碎片不足')}')"><div class="nd ${dc}"></div><div class="ni"><div class="ni-n ${nc}">${city.name}</div><div class="ni-s" style="${nc?'color:#475569':''}">${city.sub}</div></div>${st}</div>`;
+    if(i<9)mh+=`<div class="nc ${ul?'act':''}"></div>`;
+  });
+  document.getElementById('rRoute').innerHTML=mh;
+  // 探索
+  const evts=[{t:'登上古城墙',r:'🏞 大雁塔晨光'},{t:'品一碗油泼面',r:'🍜 油泼面'},{t:'在大雁塔下发呆',r:'📜 长安月色'}];
+  let eh=`<button class="btn-s" onclick="rTab('meditation')" style="margin-bottom:8px;font-size:10px">← 返回冥想</button>
+    <div style="width:100%;height:100px;background:linear-gradient(135deg,#5a4a38,#3d2d1a);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:8px">🏛️</div>
+    <div style="color:#f5c842;font-size:14px;font-weight:600">${c.name}</div><div style="color:#94a3b8;font-size:10px;margin-bottom:8px">${c.sub}</div>
+    <div style="color:#e2e8f0;font-size:12px;font-weight:600;margin-bottom:6px">可探索事件</div>`;
+  evts.forEach((ev,i)=>{
+    const done=i===0;
+    eh+=`<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:8px;margin-bottom:6px;cursor:pointer;${done?'opacity:0.5':''}" onclick="rToast('${done?'已探索':ev.t}')">
+      <div style="color:#e2e8f0;font-size:12px">${done?'✅ ':''}${ev.t}</div><div style="color:#f5c842;font-size:10px">${ev.r}</div></div>`;
+  });
+  document.getElementById('rExplore').innerHTML=rS.ui==='empty'?'<div style="text-align:center;padding:40px;color:#64748b;font-size:12px">🧭<br>开始冥想,踏上旅程吧</div>':eh;
+  // 手账
+  const jd=[{n:'西安',items:[{i:'🏞',n:'大雁塔晨光',t:'风景',c:true},{i:'🍜',n:'油泼面',t:'美食',c:true},{i:'🍜',n:'冰峰汽水',t:'美食',c:false},{i:'📜',n:'长安月色',t:'卷轴',c:true}]},{n:'敦煌',items:[{i:'🏞',n:'莫高窟飞天',t:'风景',c:true},{i:'🍜',n:'驴肉黄面',t:'美食',c:false},{i:'📜',n:'西出阳关',t:'卷轴',c:true}]},{n:'撒马尔罕',items:[{i:'🏞',n:'蓝色穹顶',t:'风景',c:false},{i:'🍜',n:'手抓饭',t:'美食',c:false},{i:'📜',n:'丝路诗篇',t:'卷轴',c:false}]}];
+  let jt=0,jc=0;jd.forEach(city=>{jt+=city.items.length;jc+=city.items.filter(x=>x.c).length});
+  let jh=rS.ui==='empty'?'<div style="text-align:center;padding:40px;color:#64748b;font-size:12px">📖<br>开始冥想,踏上旅程吧</div>':`<div class="j-prog">📖 旅行手账 ${jc}/${jt}</div>`;
+  if(rS.ui!=='empty')jd.forEach((city,ci)=>{
+    const ul=ci<rS.progress;
+    jh+=`<div class="j-city"><div class="j-cn">${ul?'📍':'🔒'} ${city.n}</div><div class="j-items">`;
+    city.items.forEach(it=>{
+      if(!ul)jh+=`<div class="j-item lk"><div class="ji-i">❓</div><div class="ji-n">未解锁</div></div>`;
+      else if(it.c)jh+=`<div class="j-item coll"><div class="ji-i">${it.i}</div><div class="ji-n">${it.n}</div><div class="ji-t">${it.t}</div></div>`;
+      else jh+=`<div class="j-item lk"><div class="ji-i">❓</div><div class="ji-n">未收集</div></div>`;
+    });
+    jh+='</div></div>';
+  });
+  document.getElementById('rJournal').innerHTML=jh;
+}
+rRender();
+
+function fitPhone(){
+  const panel=document.querySelector('.phone-panel');
+  const frame=document.querySelector('.phone-frame');
+  if(!panel||!frame)return;
+  const availH=panel.clientHeight-32;
+  const phoneH=844;
+  const scale=Math.min(1,availH/phoneH);
+  frame.style.setProperty('--phone-scale',scale.toFixed(3));
+}
+fitPhone();
+window.addEventListener('resize',fitPhone);
+</script>
+</body>
+</html>
