@@ -252,7 +252,24 @@
       <div class="page" id="pMap"><div class="map-c"><div class="map-t">🗺️ 丝绸之路</div><div style="color:#94a3b8;font-size:11px;margin-bottom:10px" id="rMapP">4/10 城市已探索</div><div id="rRoute"></div></div></div>
 
       <!-- 探索页 -->
-      <div class="page" id="pExplore"><div class="map-c" id="rExplore"></div></div>
+      <div class="page" id="pExplore">
+        <div class="map-c" id="rExplore"></div>
+        <div class="cm" id="rEventModal" style="padding:16px;justify-content:flex-start;overflow-y:auto">
+          <button class="btn-s" onclick="document.getElementById('rEventModal').classList.remove('show')" style="align-self:flex-start;margin-bottom:12px;font-size:10px">← 返回</button>
+          <div style="color:#f5c842;font-size:16px;font-weight:600;margin-bottom:12px" id="rEvtTitle"></div>
+          <div style="color:#cbd5e1;font-size:12px;line-height:2;margin-bottom:14px" id="rEvtDesc"></div>
+          <div style="background:rgba(108,99,255,0.1);border-radius:8px;padding:10px;margin-bottom:14px">
+            <div style="color:#6c63ff;font-size:10px;font-weight:600;margin-bottom:3px">💡 你知道吗</div>
+            <div style="color:#94a3b8;font-size:11px;line-height:1.6" id="rEvtFact"></div>
+          </div>
+          <div style="background:rgba(245,200,66,0.08);border:1px solid rgba(245,200,66,0.15);border-radius:10px;padding:12px;text-align:center;margin-bottom:14px">
+            <div style="font-size:28px" id="rEvtRwdIcon"></div>
+            <div style="color:#f5c842;font-size:13px;font-weight:600;margin-top:4px" id="rEvtRwdName"></div>
+            <div style="color:#94a3b8;font-size:10px;margin-top:2px" id="rEvtRwdDesc"></div>
+          </div>
+          <button class="btn-p" onclick="document.getElementById('rEventModal').classList.remove('show');rToast('已收入手账 📖')" style="font-size:12px;align-self:center">收入手账 📖</button>
+        </div>
+      </div>
 
       <!-- 手账页 -->
       <div class="page" id="pJournal"><div class="j-c" id="rJournal"></div></div>
@@ -502,15 +519,35 @@ function rRender(){
   });
   document.getElementById('rRoute').innerHTML=mh;
   // 探索
-  const evts=[{t:'登上古城墙',r:'🏞 大雁塔晨光'},{t:'品一碗油泼面',r:'🍜 油泼面'},{t:'在大雁塔下发呆',r:'📜 长安月色'}];
+  const REVTS={
+    xian:[
+      {title:'登上古城墙',desc:'你踏上了这座周长13.74公里的城墙,脚下是600年的青砖。远处的钟鼓楼在夕阳中泛着金光,城墙上的风带着黄土高原特有的干燥气息。',fact:'西安城墙是中国现存最完整的古城墙,建于明朝洪武年间(1370年),全长13.74公里。',reward:{icon:'🏞',name:'大雁塔晨光',desc:'晨光中的大雁塔,已矗立千年',type:'风景'}},
+      {title:'品一碗油泼面',desc:'街角的面馆里,师傅把面团摔打成宽带,热油浇上去的一刹那,辣椒面和蒜末发出滋滋声响,香气扑面而来。',fact:'油泼面的关键在于"泼"的那一刻:油温需要达到220°C,才能激发出辣椒素的香气而不是苦味。',reward:{icon:'🍜',name:'油泼面',desc:'热油浇上的一刹那,就是西安的味道',type:'美食'}},
+      {title:'在大雁塔下发呆',desc:'大雁塔的影子拉得很长。你坐在塔下的石阶上,听远处有人在唱秦腔,苍凉而浑厚。一千三百年前,玄奘法师也曾站在这里。',fact:'"长安一片月,万户捣衣声"——李白写这首诗时,正是大雁塔建成后不到百年。',reward:{icon:'📜',name:'长安月色',desc:'"长安一片月,万户捣衣声" —— 李白',type:'卷轴'}}
+    ],
+    dunhuang:[
+      {title:'走进莫高窟',desc:'石窟中的飞天壁画色彩依旧鲜艳,千年的时光在这里凝固。洞窟外是无尽的戈壁,洞窟内是一整个佛国世界。',fact:'莫高窟现存735个洞窟,壁画总面积约4.5万平方米,是世界上现存规模最大的佛教艺术宝库。',reward:{icon:'🏞',name:'莫高窟飞天',desc:'飞天起舞,衣袂飘飘',type:'风景'}},
+      {title:'听一曲驼铃',desc:'鸣沙山下,驼队在夕阳中缓缓前行。铃声由远及近,又渐渐消失在沙漠深处,仿佛千年前的商队从未离开。',fact:'鸣沙山的沙子在滑动时会发出嗡嗡声,被称为"沙岭晴鸣",是敦煌八景之一。',reward:{icon:'🍜',name:'驴肉黄面',desc:'大漠中的质朴美味',type:'美食'}},
+      {title:'月牙泉畔冥想',desc:'沙漠中央竟有一弯清泉,千年不涸。你盘坐在泉边,月牙形的水面映出满天星辰。',fact:'月牙泉南北长约100米,东西宽约25米,被沙山环绕却从不被掩埋,被誉为"沙漠第一泉"。',reward:{icon:'📜',name:'西出阳关',desc:'"劝君更尽一杯酒,西出阳关无故人" —— 王维',type:'卷轴'}}
+    ],
+    samarkand:[
+      {title:'仰望蓝色穹顶',desc:'雷吉斯坦广场上三座神学院并立,天蓝色的穹顶在阳光下闪耀。几何图案的马赛克精美得令人屏息。',fact:'撒马尔罕的雷吉斯坦广场被誉为"中亚最壮丽的广场",三座神学院建于15-17世纪。',reward:{icon:'🏞',name:'蓝色穹顶',desc:'中亚最壮丽的天际线',type:'风景'}},
+      {title:'品尝手抓饭',desc:'大铁锅里的手抓饭金黄油亮,羊肉酥烂,胡萝卜甘甜。这是丝绸之路上商队们最期待的一顿饭。',fact:'乌兹别克手抓饭(Plov)在2016年被列入联合国非物质文化遗产名录。',reward:{icon:'🍜',name:'手抓饭',desc:'丝路商队最期待的美味',type:'美食'}},
+      {title:'在古天文台远眺',desc:'乌鲁别克天文台的遗址上,你仿佛能看到600年前那位天文学家国王仰望星空的身影。',fact:'乌鲁别克在15世纪编制的星表记录了1018颗恒星的位置,精度领先欧洲近两个世纪。',reward:{icon:'📜',name:'丝路诗篇',desc:'星辰之下,丝路无尽',type:'卷轴'}}
+    ]
+  };
+  const cityEmojis={xian:'🏛️',dunhuang:'🏜️',samarkand:'🕌',isfahan:'🕌',istanbul:'🕌',athens:'🏛️',rome:'🏛️',paris:'🗼',london:'🌉',reykjavik:'🏔️'};
+  const evts=REVTS[rS.city]||REVTS.xian;
   let eh=`<button class="btn-s" onclick="rTab('meditation')" style="margin-bottom:8px;font-size:10px">← 返回冥想</button>
-    <div style="width:100%;height:100px;background:linear-gradient(135deg,#5a4a38,#3d2d1a);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:8px">🏛️</div>
-    <div style="color:#f5c842;font-size:14px;font-weight:600">${c.name}</div><div style="color:#94a3b8;font-size:10px;margin-bottom:8px">${c.sub}</div>
+    <div style="width:100%;height:100px;background:linear-gradient(135deg,#5a4a38,#3d2d1a);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:8px">${cityEmojis[rS.city]||'🏛️'}</div>
+    <div style="color:#f5c842;font-size:14px;font-weight:600">${c.name}</div><div style="color:#94a3b8;font-size:10px;margin-bottom:4px">${c.sub}</div>
+    <div style="color:#94a3b8;font-size:11px;line-height:1.8;margin-bottom:10px">"${c.id==='xian'?'大雁塔的晨钟暮鼓回荡了千年,城墙上的风从未停歇。':c.id==='dunhuang'?'大漠孤烟,长河落日,千年莫高在此守望。':'这座城市的每一块砖石都在诉说古老的故事。'}"</div>
     <div style="color:#e2e8f0;font-size:12px;font-weight:600;margin-bottom:6px">可探索事件</div>`;
   evts.forEach((ev,i)=>{
     const done=i===0;
-    eh+=`<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:8px;margin-bottom:6px;cursor:pointer;${done?'opacity:0.5':''}" onclick="rToast('${done?'已探索':ev.t}')">
-      <div style="color:#e2e8f0;font-size:12px">${done?'✅ ':''}${ev.t}</div><div style="color:#f5c842;font-size:10px">${ev.r}</div></div>`;
+    eh+=`<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:10px;margin-bottom:6px;cursor:pointer;transition:all .2s;${done?'opacity:0.5':''}" onclick="${done?'rToast(\'已探索完毕\')':'rOpenEvent('+i+')'}">
+      <div style="color:#e2e8f0;font-size:12px">${done?'✅ ':''} ${ev.title} ${done?'<span style=\"float:right;color:#22c55e;font-size:10px\">已完成</span>':''}</div>
+      <div style="color:#f5c842;font-size:10px;margin-top:3px">${ev.reward.icon} ${ev.reward.name}</div></div>`;
   });
   document.getElementById('rExplore').innerHTML=rS.ui==='empty'?'<div style="text-align:center;padding:40px;color:#64748b;font-size:12px">🧭<br>开始冥想,踏上旅程吧</div>':eh;
   // 手账
@@ -529,6 +566,35 @@ function rRender(){
   });
   document.getElementById('rJournal').innerHTML=jh;
 }
+function rOpenEvent(idx){
+  const REVTS={
+    xian:[
+      {title:'登上古城墙',desc:'你踏上了这座周长13.74公里的城墙,脚下是600年的青砖。远处的钟鼓楼在夕阳中泛着金光,城墙上的风带着黄土高原特有的干燥气息。',fact:'西安城墙是中国现存最完整的古城墙,建于明朝洪武年间(1370年),全长13.74公里。',reward:{icon:'🏞',name:'大雁塔晨光',desc:'晨光中的大雁塔,已矗立千年'}},
+      {title:'品一碗油泼面',desc:'街角的面馆里,师傅把面团摔打成宽带,热油浇上去的一刹那,辣椒面和蒜末发出滋滋声响,香气扑面而来。',fact:'油泼面的关键在于"泼"的那一刻:油温需要达到220°C,才能激发出辣椒素的香气而不是苦味。',reward:{icon:'🍜',name:'油泼面',desc:'热油浇上的一刹那,就是西安的味道'}},
+      {title:'在大雁塔下发呆',desc:'大雁塔的影子拉得很长。你坐在塔下的石阶上,听远处有人在唱秦腔,苍凉而浑厚。一千三百年前,玄奘法师也曾站在这里。',fact:'"长安一片月,万户捣衣声"——李白写这首诗时,正是大雁塔建成后不到百年。',reward:{icon:'📜',name:'长安月色',desc:'"长安一片月,万户捣衣声" —— 李白'}}
+    ],
+    dunhuang:[
+      {title:'走进莫高窟',desc:'石窟中的飞天壁画色彩依旧鲜艳,千年的时光在这里凝固。洞窟外是无尽的戈壁,洞窟内是一整个佛国世界。',fact:'莫高窟现存735个洞窟,壁画总面积约4.5万平方米,是世界上现存规模最大的佛教艺术宝库。',reward:{icon:'🏞',name:'莫高窟飞天',desc:'飞天起舞,衣袂飘飘'}},
+      {title:'听一曲驼铃',desc:'鸣沙山下,驼队在夕阳中缓缓前行。铃声由远及近,又渐渐消失在沙漠深处,仿佛千年前的商队从未离开。',fact:'鸣沙山的沙子在滑动时会发出嗡嗡声,被称为"沙岭晴鸣",是敦煌八景之一。',reward:{icon:'🍜',name:'驴肉黄面',desc:'大漠中的质朴美味'}},
+      {title:'月牙泉畔冥想',desc:'沙漠中央竟有一弯清泉,千年不涸。你盘坐在泉边,月牙形的水面映出满天星辰。',fact:'月牙泉南北长约100米,东西宽约25米,被沙山环绕却从不被掩埋,被誉为"沙漠第一泉"。',reward:{icon:'📜',name:'西出阳关',desc:'"劝君更尽一杯酒,西出阳关无故人" —— 王维'}}
+    ],
+    samarkand:[
+      {title:'仰望蓝色穹顶',desc:'雷吉斯坦广场上三座神学院并立,天蓝色的穹顶在阳光下闪耀。几何图案的马赛克精美得令人屏息。',fact:'撒马尔罕的雷吉斯坦广场被誉为"中亚最壮丽的广场",三座神学院建于15-17世纪。',reward:{icon:'🏞',name:'蓝色穹顶',desc:'中亚最壮丽的天际线'}},
+      {title:'品尝手抓饭',desc:'大铁锅里的手抓饭金黄油亮,羊肉酥烂,胡萝卜甘甜。这是丝绸之路上商队们最期待的一顿饭。',fact:'乌兹别克手抓饭(Plov)在2016年被列入联合国非物质文化遗产名录。',reward:{icon:'🍜',name:'手抓饭',desc:'丝路商队最期待的美味'}},
+      {title:'在古天文台远眺',desc:'乌鲁别克天文台的遗址上,你仿佛能看到600年前那位天文学家国王仰望星空的身影。',fact:'乌鲁别克在15世纪编制的星表记录了1018颗恒星的位置,精度领先欧洲近两个世纪。',reward:{icon:'📜',name:'丝路诗篇',desc:'星辰之下,丝路无尽'}}
+    ]
+  };
+  const evts=REVTS[rS.city]||REVTS.xian;
+  const ev=evts[idx];if(!ev)return;
+  document.getElementById('rEvtTitle').textContent=ev.title;
+  document.getElementById('rEvtDesc').textContent=ev.desc;
+  document.getElementById('rEvtFact').textContent=ev.fact;
+  document.getElementById('rEvtRwdIcon').textContent=ev.reward.icon;
+  document.getElementById('rEvtRwdName').textContent=ev.reward.name;
+  document.getElementById('rEvtRwdDesc').textContent=ev.reward.desc;
+  document.getElementById('rEventModal').classList.add('show');
+}
+
 rRender();
 
 function fitPhone(){
