@@ -342,7 +342,7 @@
         </div>
         <div id="controlsResting" style="display:none;position:relative;z-index:2;text-align:center">
           <button class="btn-primary" onclick="navigateTo('explore')" style="background:linear-gradient(135deg,#f5c842,#e6a817);color:#1a1a2e">探索当前城市 🔍</button>
-          <div style="color:#94a3b8;font-size:11px;margin-top:8px">休息中 · 5:00</div>
+          <div style="color:#94a3b8;font-size:11px;margin-top:8px" id="restTimeLabel">休息中 · 5:00</div>
         </div>
       </div>
     </div>
@@ -441,19 +441,29 @@ const state = {
   travelProgress: 4,
   uiState: 'normal',
   currentTab: 'meditation',
-  remaining: 25*60
+  remaining: 25*60,
+  restRemaining: 5*60
 };
 let countdownTimer = null;
 function startCountdown(){
   if(countdownTimer) clearInterval(countdownTimer);
   countdownTimer = setInterval(()=>{
-    if(state.timerState!=='focusing') return;
-    state.remaining--;
-    if(state.remaining<=0){state.remaining=0;clearInterval(countdownTimer);countdownTimer=null;state.timerState='completed';render();return;}
-    const m=Math.floor(state.remaining/60), s=state.remaining%60;
-    document.getElementById('timerTime').textContent=m+':'+(s<10?'0':'')+s;
-    const circ=2*Math.PI*72, pct=(state.duration*60-state.remaining)/(state.duration*60);
-    document.getElementById('timerProgress').style.strokeDashoffset=(circ*(1-pct)).toFixed(1);
+    if(state.timerState==='focusing'){
+      state.remaining--;
+      if(state.remaining<=0){state.remaining=0;clearInterval(countdownTimer);countdownTimer=null;state.timerState='completed';render();return;}
+      const m=Math.floor(state.remaining/60), s=state.remaining%60;
+      document.getElementById('timerTime').textContent=m+':'+(s<10?'0':'')+s;
+      const circ=2*Math.PI*72, pct=(state.duration*60-state.remaining)/(state.duration*60);
+      document.getElementById('timerProgress').style.strokeDashoffset=(circ*(1-pct)).toFixed(1);
+    } else if(state.timerState==='resting'){
+      state.restRemaining--;
+      if(state.restRemaining<=0){state.restRemaining=0;clearInterval(countdownTimer);countdownTimer=null;showToast('休息结束');state.timerState='idle';state.remaining=state.duration*60;state.restRemaining=5*60;document.getElementById('timerState').value='idle';render();return;}
+      const m=Math.floor(state.restRemaining/60), s=state.restRemaining%60;
+      document.getElementById('timerTime').textContent=m+':'+(s<10?'0':'')+s;
+      const el=document.getElementById('restTimeLabel');if(el)el.textContent='休息中 · '+m+':'+(s<10?'0':'')+s;
+      const pct=(5*60-state.restRemaining)/(5*60), circ=2*Math.PI*72;
+      document.getElementById('timerProgress').style.strokeDashoffset=(circ*pct).toFixed(1);
+    }
   },1000);
 }
 function stopCountdown(){if(countdownTimer){clearInterval(countdownTimer);countdownTimer=null;}}
@@ -509,7 +519,7 @@ function selectDuration(el){
   el.classList.add('active');
   state.duration = parseInt(el.dataset.dur);
 }
-function changeTimerState(v){ stopCountdown(); state.timerState = v; if(v==='idle'){state.remaining=state.duration*60}else if(v==='focusing'){state.remaining=Math.floor(state.duration*60*0.74);startCountdown()}else if(v==='paused'){state.remaining=Math.floor(state.duration*60*0.74)} }
+function changeTimerState(v){ stopCountdown(); state.timerState = v; if(v==='idle'){state.remaining=state.duration*60;state.restRemaining=5*60}else if(v==='focusing'){state.remaining=Math.floor(state.duration*60*0.74);startCountdown()}else if(v==='paused'){state.remaining=Math.floor(state.duration*60*0.74)}else if(v==='resting'){state.restRemaining=5*60;startCountdown()} }
 function changeTravelProgress(v){ state.travelProgress = parseInt(v); }
 function changeUiState(v){ state.uiState = v; }
 function applyAll(){ render(); }
@@ -579,13 +589,15 @@ function renderMeditation(){
       const pc=2*Math.PI*72,pp=(state.duration*60-state.remaining)/(state.duration*60);
       progress.style.strokeDashoffset=(pc*(1-pp)).toFixed(1);
       break;}
-    case 'resting':
+    case 'resting':{
       char.classList.add('char-idle');
       document.getElementById('controlsResting').style.display = '';
-      document.getElementById('timerTime').textContent = '5:00';
+      const rstm=Math.floor(state.restRemaining/60),rsts=state.restRemaining%60;
+      document.getElementById('timerTime').textContent=rstm+':'+(rsts<10?'0':'')+rsts;
       label.textContent = '休息中';
-      progress.style.strokeDashoffset = '0';
-      break;
+      const rstpct=(5*60-state.restRemaining)/(5*60),rstcirc=2*Math.PI*72;
+      progress.style.strokeDashoffset=(rstcirc*rstpct).toFixed(1);
+      break;}
     case 'completed':
       document.getElementById('completeModal').classList.add('show');
       label.textContent = '完成!';
@@ -735,9 +747,11 @@ function abandonMeditation(){
 }
 function dismissComplete(){
   document.getElementById('completeModal').classList.remove('show');
+  state.restRemaining = 5*60;
   state.timerState = 'resting';
   document.getElementById('timerState').value = 'resting';
   render();
+  startCountdown();
 }
 function pickDuration(el,dur){
   document.querySelectorAll('.duration-chip').forEach(c=>c.classList.remove('active'));
